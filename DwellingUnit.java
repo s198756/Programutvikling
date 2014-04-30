@@ -19,7 +19,7 @@ public class DwellingUnit {
     long propertyOwner;                         // Personnummeret til eier av bolig
     String dwellingType;                        // Boligtype
     int size;                                   // Størrelse i kvadratmeter
-    static String street;                       // Gateadresse
+    String street;                       // Gateadresse
     String streetNo;                            // Gatenummer (med mulighet for oppgangsbokstav)
     int zipCode;                                // Postnummer
     int monthlyPrice;                           // Månedsleie
@@ -51,6 +51,7 @@ public class DwellingUnit {
     // Timestamps
     Date created;
     Date lastModified;
+
 
     public DwellingUnit (int duID) throws SQLException {
 
@@ -157,6 +158,10 @@ public class DwellingUnit {
 
     public int getSize() {
         return size;
+    }
+
+    public String getFullAddress() {
+        return street + " " + streetNo + " " + zipCode;
     }
 
     public String getStreet() {
@@ -267,4 +272,4 @@ public class DwellingUnit {
         }
 
     }
-}//
+}
