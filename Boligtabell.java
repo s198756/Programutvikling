@@ -171,6 +171,3 @@ public class Boligtabell {
     }
 }
 }
-
-
-// TEST TEST TEST TEST TEST

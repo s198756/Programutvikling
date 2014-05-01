@@ -43,5 +43,5 @@ public class Boligtabellmodell extends AbstractTableModel {
         return 0;
     }
 
-    
+
 }
