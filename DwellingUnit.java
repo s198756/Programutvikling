@@ -7,7 +7,6 @@ import java.util.Date;
 
 public class DwellingUnit {
 
-    // JDBC driver name and database URL
     private static final String DB_DRIVER = "com.mysql.jdbc.Driver";
     private static final String DB_URL = "jdbc:mysql://sebastianramsla3.mysql.domeneshop.no/sebastianramsla3";
     private static final String DB_USER = "sebastianramsla3";
@@ -274,6 +273,6 @@ public class DwellingUnit {
             // SET available = newStatus
             // WHERE dwelling_unit_id LIKE duID
         }
-
+        return true;
     }
 }

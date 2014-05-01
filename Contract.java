@@ -7,7 +7,6 @@ import java.util.Date;
 
 public class Contract {
 
-    // JDBC driver name and database URL
     private static final String DB_DRIVER = "com.mysql.jdbc.Driver";
     private static final String DB_URL = "jdbc:mysql://sebastianramsla3.mysql.domeneshop.no/sebastianramsla3";
     private static final String DB_USER = "sebastianramsla3";
@@ -91,6 +90,10 @@ public class Contract {
                 con.close();
             }
         }
+    }
+
+    public int getContractID()  {
+        return contractID;
     }
 
     public long getRenter() {
@@ -220,4 +223,3 @@ public class Contract {
         }
     }
 }
-
