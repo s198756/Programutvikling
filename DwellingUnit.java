@@ -264,10 +264,10 @@ public class DwellingUnit {
         return lastModified;
     }
 
-    public void updateAvailability(int duID, boolean newStatus)   {
+    public boolean updateAvailability(boolean newStatus)   {
 
         if (newStatus == isAvailable) {
-            return;
+            return true;
         }
         else {
             // UPDATE dwelling_unit
