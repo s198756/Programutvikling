@@ -116,6 +116,10 @@ public class Person {
         }
     }
 
+    public long getPersonNo() {
+        return personNo;
+    }
+
     public String getFullName() {
         return firstname + " " + middlename + " " + surname;
     }

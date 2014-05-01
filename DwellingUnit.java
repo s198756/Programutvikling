@@ -19,7 +19,7 @@ public class DwellingUnit {
     long propertyOwner;                         // Personnummeret til eier av bolig
     String dwellingType;                        // Boligtype
     int size;                                   // Størrelse i kvadratmeter
-    String street;                       // Gateadresse
+    String street;                              // Gateadresse
     String streetNo;                            // Gatenummer (med mulighet for oppgangsbokstav)
     int zipCode;                                // Postnummer
     int monthlyPrice;                           // Månedsleie
@@ -142,6 +142,10 @@ public class DwellingUnit {
                 con.close();
             }
         }
+    }
+
+    public int getDwellingUnitID() {
+        return dwellingUnitID;
     }
 
     public boolean getIsAvailable() {
