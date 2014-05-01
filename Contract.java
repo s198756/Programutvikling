@@ -101,7 +101,41 @@ public class Contract {
         return broker;
     }
 
-    public boolean validateContract(int cID) throws SQLException {
+    public boolean getIsValid()  {
+        return isValid;
+    }
+
+    public boolean getHasPaidDepositum()  {
+        return hasPaidDepositum;
+    }
+
+    public boolean getIsSignedByRenter()  {
+        return isSignedByRenter;
+    }
+
+    public boolean getIsSignedByBroker()  {
+        return isSignedByBroker;
+    }
+
+    public Date getInEffectDate() {
+        return inEffectDate;
+    }
+
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public Date getCreatedDate()  {
+        return created;
+    }
+
+    public Date getLastModifiedDate()  {
+        return lastModified;
+    }
+
+    public boolean validateContract() throws SQLException {
+    // Metode som oppdaterer valid-feltet i databasen tilhørende riktig kontrakt ID, dersom kravene utfylles.
+    // Returnerer true dersom oppdateringen blir gjennomført - eller hvis feltet allerede er "valid".
 
         if (this.isValid)
             return true;
@@ -156,17 +190,22 @@ public class Contract {
                     pst = con.prepareStatement(sql);
 
                     pst.setBoolean(1, true);
-                    pst.setInt(2, cID);
+                    pst.setInt(2, contractID);
 
                     pst.executeUpdate();
 
                     System.out.println("Update utført!");
 
-                } catch (SQLException e) {
+                    pst.close();
+                    con.close();
+                }
 
+                catch (SQLException e) {
                     System.out.println(e.getMessage());
+                    return false;
+                }
 
-                } finally {
+                finally {
 
                     if (pst != null) {
                         pst.close();

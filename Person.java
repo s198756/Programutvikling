@@ -37,10 +37,8 @@ public class Person {
 
     public Person (long pNo) throws SQLException {
 
-        Connection con = null;
         PreparedStatement pst = null;
-        ResultSet rs = null;
-
+        Connection con = null;
         try {
             Class.forName(DB_DRIVER);
             con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
@@ -51,7 +49,7 @@ public class Person {
 
             pst.setLong(1, pNo);
 
-            rs = pst.executeQuery();
+            ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
 
@@ -105,7 +103,6 @@ public class Person {
         }
 
         finally {
-
             if (pst != null) {
                 pst.close();
             }
@@ -186,5 +183,13 @@ public class Person {
 
     public boolean getNeedsHandicapAccommodation() {
         return needsHandicapAccommodation;
+    }
+
+    public Date getCreatedDate()  {
+        return created;
+    }
+
+    public Date getLastModifiedDate()  {
+        return lastModified;
     }
 }
