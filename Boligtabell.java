@@ -1,122 +1,107 @@
 package Superiore;
 
-import com.sun.rowset.CachedRowSetImpl;
 
 import java.sql.*;
-import javax.sql.rowset.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.util.Vector;
 
 /**
  * Created by Dragon on 22.04.14.
  */
 public class Boligtabell {
+    static final String DRIVER = "com.mysql.jdbc.Driver";
     static final String USER = "sebastianramsla3";
     static final String PASSWORD = "pjW8iUnH";
-    static final String URL = "sebastianramsla3.mysql.domeneshop.no";
+    static final String URL = "jdbc:mysql://sebastianramsla3.mysql.domeneshop.no/sebastianramsla3?zeroDateTimeBehavior=convertToNull";
     private Connection con = null;
     private Statement stmt = null;
     private ResultSet rs = null;
 
-    public CachedRowSet visAltIBoligtabellen(){
-        CachedRowSetImpl c = null;
-        String query = "SELECT * FROM dwelling_units";
+    public DefaultTableModel visAltIBoligtabellen() {
+        String query = "SELECT * FROM dwelling_unit";
 
-        try{
+        Vector columnnames = new Vector();
+        Vector rows = new Vector();
+        try {
+            Class.forName(DRIVER);
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             stmt = con.createStatement();
             rs = stmt.executeQuery(query);
-            c = new CachedRowSetImpl();
-            c.populate(rs);
-        }catch(SQLException sqle){
+            ResultSetMetaData metadata = rs.getMetaData();
+            int numberofcolumns = metadata.getColumnCount();
+
+            for (int column = 0; column < numberofcolumns; column++) {
+                columnnames.addElement(metadata.getColumnLabel(column + 1));
+            }
+
+            while (rs.next()) {
+                Vector newrows = new Vector();
+                for (int i = 1; i <= numberofcolumns; i++) {
+                    newrows.addElement(rs.getObject(i));
+                }
+                rows.addElement(newrows);
+            }
+            rs.close();
+            stmt.close();
+            con.close();
+
+        } catch (SQLException sqle) {
             sqle.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                rs.close();
-                stmt.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
+        }catch(ClassNotFoundException cnfe){
+            cnfe.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Finner ikke klassen!");
         }
-        if(c == null){
-            JOptionPane.showMessageDialog(null, "Boliglisten er tom!");
-            return null;
-        }else{
-        return c;
-        }
+
+        DefaultTableModel everything = new DefaultTableModel(rows, columnnames);
+        return everything;
     }
 
-    public CachedRowSet finnBoligVedAASkriveInnId(int id){
-        CachedRowSet c = null;
+    public DefaultTableModel finnBoligVedAASkriveInnAdresse(String adresse){
         PreparedStatement ps = null;
-        String query = "SELECT * FROM dwelling_units WHERE dwelling_unit_id LIKE ?";
+        String query = "SELECT * FROM dwelling_unit WHERE street LIKE ?";
+        Vector rows = new Vector();
+        Vector columnnames = new Vector();
 
         try{
+            Class.forName(DRIVER);
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             ps = con.prepareStatement(query);
-            ps.setInt(1, id);
+            ps.setString(1, "%" + adresse + "%");
             rs = ps.executeQuery();
-            c = new CachedRowSetImpl();
-            c.populate(rs);
-            c.setPageSize(30);
+            ResultSetMetaData metadata = rs.getMetaData();
+            int numberofcolumns = metadata.getColumnCount();
+
+            for (int column = 0; column < numberofcolumns; column++) {
+                columnnames.addElement(metadata.getColumnLabel(column + 1));
+            }
+
+            while (rs.next()) {
+                Vector newrows = new Vector();
+                for (int i = 1; i <= numberofcolumns; i++) {
+                    newrows.addElement(rs.getObject(i));
+                }
+                rows.addElement(newrows);
+            }
+            rs.close();
+            ps.close();
+            con.close();
+
         }catch(SQLException sqle){
             sqle.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                rs.close();
-                stmt.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
+        }catch(ClassNotFoundException cnfe){
+            cnfe.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Finner ikke driverklassen!");
         }
-        if(c == null){
-            JOptionPane.showMessageDialog(null, "Ingen boliger har denne id-en!");
-            return null;
-        }
-        return c;
-    }
-
-    public CachedRowSet finnBoligVedAASkriveInnAdresse(String adresse){
-        CachedRowSet c = null;
-        PreparedStatement ps = null;
-        String query = "SELECT * FROM dwelling_units WHERE street LIKE ?";
-
-        try{
-            con = DriverManager.getConnection(URL, USER, PASSWORD);
-            ps = con.prepareStatement(query);
-            ps.setString(1, adresse);
-            rs = ps.executeQuery();
-            c = new CachedRowSetImpl();
-            c.populate(rs);
-            c.setPageSize(30);
-        }catch(SQLException sqle){
-            sqle.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                rs.close();
-                stmt.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
-        }
-        if(c == null){
-            JOptionPane.showMessageDialog(null, "Ingen boliger har denne adressen!");
-            return null;
-        }
-        return c;
+            DefaultTableModel adress = new DefaultTableModel(rows, columnnames);
+            return adress;
     }
 
     public void settVarmtvannVerdiTilTrue(int id ){
-        String query = "UPDATE dwelling_unit SET ind_warmwater LIKE ? WHERE dwelling_unit_id LIKE ?";
-        PreparedStatement ps = null;
+            String query = "UPDATE dwelling_unit SET ind_warmwater LIKE ? WHERE dwelling_unit_id LIKE ?";
+            PreparedStatement ps = null;
 
         try{
             con = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -139,9 +124,10 @@ public class Boligtabell {
     }
 
     public void settInnNyBoligIBoliglisten(String owner, String type, int size, String street, int streetnr, int zip, int monthly, int deposit){
-        String query = "SELECT * FROM dwelling_units";
+        String query = "SELECT * FROM dwelling_unit";
 
         try{
+            Class.forName(DRIVER);
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
             rs = stmt.executeQuery(query);
@@ -159,6 +145,9 @@ public class Boligtabell {
         }catch(SQLException sqle){
             sqle.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
+        }catch(ClassNotFoundException cnfe){
+            cnfe.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Driverklassen ikke funnet!");
         }finally{
             try{
                 rs.close();
