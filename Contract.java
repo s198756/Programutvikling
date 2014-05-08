@@ -290,6 +290,10 @@ public class Contract {
         }
     }
 
+    public CachedRowSetImpl getCachedRowSet() {
+        return crs;
+    }
+
     public int getContractID()  {
         return contractID;
     }

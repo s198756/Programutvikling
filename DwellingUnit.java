@@ -115,6 +115,7 @@ public class DwellingUnit {
                 hasElevator = crs.getBoolean("elevator");
                 hasHandicapAccommodation = crs.getBoolean("handicap_accomm");
 
+
                 // Timestamps
                 created = crs.getTimestamp("created");
                 lastModified = crs.getTimestamp("last_modified");
@@ -202,6 +203,10 @@ public class DwellingUnit {
         else {
             System.out.println("Error: Could NOT commit to the database.");
         }
+    }
+
+    public CachedRowSetImpl getCachedRowSet() {
+        return crs;
     }
 
     public int getDwellingUnitID() {

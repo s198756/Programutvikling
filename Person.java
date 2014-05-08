@@ -36,6 +36,9 @@ public class Person {
     private SQLInterface dbInterface = new SQLInterface();
     private CachedRowSetImpl crs;
 
+    // Oppretter prepared statement
+    private PreparedStatement pst = null;
+
     public Person (String pNo) {
         personNo = pNo;
     }
@@ -43,10 +46,14 @@ public class Person {
     // Metode som innhenter alle dataverdier tilhørende personen
     public void startQuery() throws SQLException {
 
+        String query = "SELECT person_no, is_broker, firstname, middlename, surname, street, street_no, zip_code, area, township, county, telephone, email, annual_revenue, passed_credit_check, housepets, smoker, marital_status, handicap_accomm, created, last_modified FROM person_all_fields WHERE person_no = ?";
+
+
+        pst.setString(1, personNo);
+
         // create SQLInterface object
         // execute query
-        if (!dbInterface.execQuery(
-                "SELECT person_no, is_broker, firstname, middlename, surname, street, street_no, zip_code, area, township, county, telephone, email, annual_revenue, passed_credit_check, housepets, smoker, marital_status, handicap_accomm, created, last_modified FROM person_all_fields WHERE person_no = " + personNo)) {
+        if (!dbInterface.execQuery(query)) {
 
             // exception caught, halt execution
             System.exit(1);
@@ -178,6 +185,10 @@ public class Person {
         else {
             System.out.println("Error: Could NOT commit to the database.");
         }
+    }
+
+    public CachedRowSetImpl getCachedRowSet() {
+        return crs;
     }
 
     public String getPersonNo() {
