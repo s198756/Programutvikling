@@ -2,117 +2,185 @@
  * Created by sebastianramsland on 30.04.14.
  */
 
+import com.sun.rowset.CachedRowSetImpl;
 import java.sql.*;
-import java.util.Date;
 
 public class Person {
 
-    private static final String DB_DRIVER = "com.mysql.jdbc.Driver";
-    private static final String DB_URL = "jdbc:mysql://sebastianramsla3.mysql.domeneshop.no/sebastianramsla3";
-    private static final String DB_USER = "sebastianramsla3";
-    private static final String DB_PASSWORD = "pjW8iUnH";
-
     // Generell informasjon
-    long personNo;                              // Personnummer
-    boolean isBroker;                           // Er personen megler?
-    String firstname;                           // Fornavn
-    String middlename;                          // Mellomnavn
-    String surname;                             // Etternavn
-    String street;                              // Gateadresse
-    String streetNo;                            // Gatenummer (med mulighet for oppgangsbokstav)
-    int zipCode;                                // Postnummer
-    long telephoneNo;                           // Telefonnummer
-    String email;                               // Epostadresse
-    int annualRevenue;                          // Årsinntekt
-    boolean hasPassedCreditCheck;               // Har personen bestått kredittsjekk?
-    boolean hasHousepets;                       // Har personen husdyr?
-    boolean isSmoker;                           // Røyker personen?
-    String maritalStatus;                       // Sivilstatus
-    boolean needsHandicapAccommodation;         // Trenger personen handicaptilpasning?
+    private String personNo;                            // Personnummer
+    private boolean isBroker;                           // Er personen megler?
+    private String firstname;                           // Fornavn
+    private String middlename;                          // Mellomnavn
+    private String surname;                             // Etternavn
+    private String street;                              // Gateadresse
+    private String streetNo;                            // Gatenummer (med mulighet for oppgangsbokstav)
+    private int zipCode;                                // Postnummer
+    private String area;                                // Poststed
+    private String township;                            // Kommune
+    private String county;                              // Fylke
+    private long telephoneNo;                           // Telefonnummer
+    private String email;                               // Epostadresse
+    private int annualRevenue;                          // Årsinntekt
+    private boolean hasPassedCreditCheck;               // Har personen bestått kredittsjekk?
+    private boolean hasHousepets;                       // Har personen husdyr?
+    private boolean isSmoker;                           // Røyker personen?
+    private String maritalStatus;                       // Sivilstatus
+    private boolean needsHandicapAccommodation;         // Trenger personen handicaptilpasning?
 
     // Timestamps
-    Date created;
-    Date lastModified;
+    private Timestamp createdDate;
+    private Timestamp lastModifiedDate;
 
-    public Person (long pNo) throws SQLException {
+    // Oppretter SQLInterface
+    private SQLInterface dbInterface = new SQLInterface();
+    private CachedRowSetImpl crs;
 
-        PreparedStatement pst = null;
-        Connection con = null;
+    public Person (String pNo) {
+        personNo = pNo;
+    }
+
+    // Metode som innhenter alle dataverdier tilhørende personen
+    public void startQuery() throws SQLException {
+
+        // create SQLInterface object
+        // execute query
+        if (!dbInterface.execQuery(
+                "SELECT person_no, is_broker, firstname, middlename, surname, street, street_no, zip_code, area, township, county, telephone, email, annual_revenue, passed_credit_check, housepets, smoker, marital_status, handicap_accomm, created, last_modified FROM person_all_fields WHERE person_no = " + personNo)) {
+
+            // exception caught, halt execution
+            System.exit(1);
+        }
+
+        // create CachedRowSet
         try {
-            Class.forName(DB_DRIVER);
-            con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            crs = new CachedRowSetImpl();
+            crs = dbInterface.getRowSet();
 
-            String sql = "SELECT * FROM person WHERE person_no = ?";
-
-            pst = con.prepareStatement(sql);
-
-            pst.setLong(1, pNo);
-
-            ResultSet rs = pst.executeQuery();
-
-            while (rs.next()) {
+            while (crs.next()) {
 
                 // Generell informasjon om person
-                personNo = rs.getLong("person_no");
-                isBroker = rs.getBoolean("is_broker");
-                firstname = rs.getString("firstname");
-                middlename = rs.getString("middlename");
-                surname = rs.getString("surname");
+                personNo = crs.getString(1);
+                isBroker = crs.getBoolean(2);
+                firstname = crs.getString(3);
+                middlename = crs.getString(4);
+                surname = crs.getString(5);
 
                 // Kontaktinformasjon
-                street = rs.getString("street");
-                streetNo = rs.getString("street_no");
-                zipCode = rs.getInt("zip_code");
-                telephoneNo = rs.getLong("telephone");
-                email = rs.getString("email");
+                street = crs.getString(6);
+                streetNo = crs.getString(7);
+                zipCode = crs.getInt(8);
+                area = crs.getString(9);
+                township = crs.getString(10);
+                county = crs.getString(11);
+                telephoneNo = crs.getLong(12);
+                email = crs.getString(13);
 
                 // Informasjon tilknyttet til boligsøk
-                annualRevenue = rs.getInt("annual_revenue");
-                hasPassedCreditCheck = rs.getBoolean("passed_credit_check");
-                hasHousepets = rs.getBoolean("housepets");
-                isSmoker = rs.getBoolean("smoker");
-                maritalStatus = rs.getString("marital_status");
-                needsHandicapAccommodation = rs.getBoolean("handicap_accomm");
+                annualRevenue = crs.getInt(14);
+                hasPassedCreditCheck = crs.getBoolean(15);
+                hasHousepets = crs.getBoolean(16);
+                isSmoker = crs.getBoolean(17);
+                maritalStatus = crs.getString(18);
+                needsHandicapAccommodation = crs.getBoolean(19);
 
                 // Timestamps
-                created = rs.getDate("created");
-                lastModified = rs.getDate("last_modified");
+                createdDate = crs.getTimestamp(20);
+                lastModifiedDate = crs.getTimestamp(21);
 
-                System.out.println("Personnummer:" + personNo);
-                System.out.println("Megler:" + isBroker);
-                System.out.println("Fornavn:" + firstname);
-                System.out.println("Mellomnavn:" + middlename);
-                System.out.println("Etternavn:" + surname);
-                System.out.println("Gate:" + street);
-                System.out.println("Nummer:" + streetNo);
-                System.out.println("Postnummer:" + zipCode);
-                System.out.println("Telefon:" + telephoneNo);
-                System.out.println("Epost:" + email);
-                System.out.println("Årsinntekt:" + annualRevenue);
-                System.out.println("Bestått kreditsjekk:" + hasPassedCreditCheck);
-                System.out.println("Husdyr:" + hasHousepets);
-                System.out.println("Røyker:" + isSmoker);
-                System.out.println("Sivilstatus:" + maritalStatus);
-                System.out.println("Handicaptilpasning:" + needsHandicapAccommodation);
+                System.out.println("Personnummer: " + personNo);
+                System.out.println("Megler: " + isBroker);
+                System.out.println("Fornavn: " + firstname);
+                System.out.println("Mellomnavn: " + middlename);
+                System.out.println("Etternavn: " + surname);
+                System.out.println("Gate: " + street);
+                System.out.println("Nummer: " + streetNo);
+                System.out.println("Postnummer: " + zipCode);
+                System.out.println("Poststed: " + area);
+                System.out.println("Kommune: " + township);
+                System.out.println("Fylke: " + county);
+                System.out.println("Telefon: " + telephoneNo);
+                System.out.println("Epost: " + email);
+                System.out.println("Årsinntekt: " + annualRevenue);
+                System.out.println("Bestått kreditsjekk: " + hasPassedCreditCheck);
+                System.out.println("Husdyr: " + hasHousepets);
+                System.out.println("Røyker: " + isSmoker);
+                System.out.println("Sivilstatus: " + maritalStatus);
+                System.out.println("Handicaptilpasning: " + needsHandicapAccommodation);
+                System.out.println("Opprettet: " + createdDate);
+                System.out.println("Sist endret: " + lastModifiedDate);
+                System.out.println("\n /////// END OF PERSON //////// \n");
             }
-
-        }
-        catch (Exception e) {
-            System.out.println(e);
-        }
-
-        finally {
-            if (pst != null) {
-                pst.close();
-            }
-
-            if (con != null) {
-                con.close();
-            }
+        } catch (SQLException se) {
+            System.out.println("SQL Exception Error ved innhenting av data.");
         }
     }
 
-    public long getPersonNo() {
+    // Oppdateringsmetode for Stringverdier
+    public void updateStringValue(String columnName, String value) throws SQLException {
+        try {
+            // Hopper til øverste rad
+            crs.first();
+
+            // Oppdaterer felt
+            crs.updateString(columnName, value);
+            System.out.println("UpdateString...");
+            crs.updateRow();
+            System.out.println("UpdateRow...");
+
+        }
+        catch (SQLException s) {
+            System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+        }
+    }
+
+    // Oppdateringsmetode for Intverdier
+    public void updateIntValue(String columnName, int value) throws SQLException {
+        try {
+            // Hopper til øverste rad
+            crs.first();
+
+            // Oppdaterer felt
+            crs.updateInt(columnName, value);
+            System.out.println("UpdateInt...");
+            crs.updateRow();
+            System.out.println("UpdateRow...");
+
+        }
+        catch (SQLException s) {
+            System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+        }
+    }
+
+    // Oppdateringsmetode for Booleanverdier
+    public void updateBooleanValue(String columnName, boolean value) throws SQLException {
+        try {
+            // Hopper til øverste rad
+            crs.first();
+
+            // Oppdaterer felt
+            crs.updateBoolean(columnName, value);
+            System.out.println("UpdateBoolean...");
+            crs.updateRow();
+            System.out.println("UpdateRow...");
+
+        }
+        catch (SQLException s) {
+            System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+        }
+    }
+
+    // Sender de oppdaterte feltene til databasen
+    public void commitChanges() {
+        if (dbInterface.commitToDatabase(crs)) {
+            System.out.println("Successfully committed to the database.");
+        }
+        else {
+            System.out.println("Error: Could NOT commit to the database.");
+        }
+    }
+
+    public String getPersonNo() {
         return personNo;
     }
 
@@ -152,6 +220,18 @@ public class Person {
         return zipCode;
     }
 
+    public String getArea() {
+        return area;
+    }
+
+    public String getTownship() {
+        return township;
+    }
+
+    public String getCounty() {
+        return county;
+    }
+
     public long getTelephoneNo() {
         return telephoneNo;
     }
@@ -184,11 +264,11 @@ public class Person {
         return needsHandicapAccommodation;
     }
 
-    public Date getCreatedDate()  {
-        return created;
+    public Timestamp getCreatedDate()  {
+        return createdDate;
     }
 
-    public Date getLastModifiedDate()  {
-        return lastModified;
+    public Timestamp getLastModifiedDate()  {
+        return lastModifiedDate;
     }
 }
