@@ -24,7 +24,7 @@ public class PersonUpdate {
 
             con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
 
-            String updatePersonSQL = "UPDATE person SET    person_no = ?," +
+            String updatePersonSQL = "UPDATE person SET person_no = ?," +
                                                     "is_broker = ?," +
                                                     "firstname = ?," +
                                                     "middlename = ?," +

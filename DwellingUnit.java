@@ -1,146 +1,206 @@
 /**
  * Created by Sebastian Ramsland on 30.04.2014.
  */
-//STEP 1. Import required packages
+
+import com.sun.rowset.CachedRowSetImpl;
 import java.sql.*;
-import java.util.Date;
 
 public class DwellingUnit {
 
-    // JDBC driver name and database URL
-    private static final String DB_DRIVER = "com.mysql.jdbc.Driver";
-    private static final String DB_URL = "jdbc:mysql://sebastianramsla3.mysql.domeneshop.no/sebastianramsla3";
-    private static final String DB_USER = "sebastianramsla3";
-    private static final String DB_PASSWORD = "pjW8iUnH";
-
     // Generell informasjon
-    int dwellingUnitID;                         // Unikt ID-nummer for boligen
-    boolean isAvailable;                        // Er boligen ledig?
-    long propertyOwner;                         // Personnummeret til eier av bolig
-    String dwellingType;                        // Boligtype
-    int size;                                   // Størrelse i kvadratmeter
-    String street;                              // Gateadresse
-    String streetNo;                            // Gatenummer (med mulighet for oppgangsbokstav)
-    int zipCode;                                // Postnummer
-    int monthlyPrice;                           // Månedsleie
-    int depositumPrice;                         // Depositumspris
+    private int dwellingUnitID;                         // Unikt ID-nummer for boligen
+    private boolean isAvailable;                        // Er boligen ledig?
+    private String propertyOwner;                       // Personnummeret til eier av bolig
+    private String dwellingType;                        // Boligtype
+    private int size;                                   // Størrelse i kvadratmeter
+    private String street;                              // Gateadresse
+    private String streetNo;                            // Gatenummer (med mulighet for oppgangsbokstav)
+    private int zipCode;                                // Postnummer
+    private String area;                                // Poststed
+    private String township;                            // Kommune
+    private String county;                              // Fylke
+    private int monthlyPrice;                           // Månedsleie
+    private int depositumPrice;                         // Depositumspris
 
     // Inkludert i leiepris
-    boolean inclusiveWarmup;                    // Inklusivt oppvarming/fyring?
-    boolean inclusiveWarmWater;                 // Inklusivt varmtvann?
-    boolean inclusiveInternet;                  // Inklusivt internett?
-    boolean inclusiveCableTV;                   // Inklusivt kabel-TV?
-    boolean inclusiveElectricity;               // Inklusivt strøm?
-    boolean inclusiveFurniture;                 // Inklusivt møbler?
-    boolean inclusiveElectricAppliances;        // Inklusivt hvitevarer?
+    private boolean inclusiveWarmup;                    // Inklusivt oppvarming/fyring?
+    private boolean inclusiveWarmWater;                 // Inklusivt varmtvann?
+    private boolean inclusiveInternet;                  // Inklusivt internett?
+    private boolean inclusiveCableTV;                   // Inklusivt kabel-TV?
+    private boolean inclusiveElectricity;               // Inklusivt strøm?
+    private boolean inclusiveFurniture;                 // Inklusivt møbler?
+    private boolean inclusiveElectricAppliances;        // Inklusivt hvitevarer?
 
-    // Hva er ikke tillat
-    boolean allowHousepets;                     // Tillat husdyr?
-    boolean allowSmokers;                       // Tillat røykere?
+    // Hva er ikke ønsket?
+    private boolean allowHousepets;                     // Tillat husdyr?
+    private boolean allowSmokers;                       // Tillat røykere?
 
     // Detaljert informasjon
-    int propertySize;                           // Tomtestørrelse (gjelder for villa, rekkehus etc)
-    int amountOfBedrooms;                       // Antall soverom
-    int amountOfBathrooms;                      // Antall baderom/toalett
-    int amountOfTerraces;                       // Antall terasser
-    int amountOfBalconies;                      // Antall balkonger
-    int amountOfPrivateParking;                 // Antall private parkeringsplasser
-    boolean hasElevator;                        // Har boligen heis?
-    boolean hasHandicapAccommodation;           // Er boligen tilpasset handicappede?
+    private int propertySize;                           // Tomtestørrelse (gjelder for villa, rekkehus etc)
+    private int amountOfBedrooms;                       // Antall soverom
+    private int amountOfBathrooms;                      // Antall baderom/toalett
+    private int amountOfTerraces;                       // Antall terasser
+    private int amountOfBalconies;                      // Antall balkonger
+    private int amountOfPrivateParking;                 // Antall private parkeringsplasser
+    private boolean hasElevator;                        // Har boligen heis?
+    private boolean hasHandicapAccommodation;           // Er boligen tilpasset handicappede?
 
     // Timestamps
-    Date created;
-    Date lastModified;
+    private Timestamp created;                          // Dato/tidspunkt for opprettelse
+    private Timestamp lastModified;                     // Dato/tidspunkt for sist endring
+
+    // Oppretter SQLInterface
+    private SQLInterface dbInterface = new SQLInterface();
+    private CachedRowSetImpl crs;
 
 
-    public DwellingUnit (int duID) throws SQLException {
+    public DwellingUnit (int duID) {
+        dwellingUnitID = duID;
+    }
 
-        Connection con = null;
-        PreparedStatement pst = null;
-        ResultSet rs = null;
+    // Metode som innhenter alle dataverdier tilhørende boenheten
+    public void startQuery() throws SQLException {
 
+        // create SQLInterface object
+        // execute query
+        if (!dbInterface.execQuery(
+                "SELECT dwelling_unit_id, available, property_owner, dwelling_type, size, street, street_no, zip_code, area, township, county, monthly_price, depositum, incl_warmup, incl_warmwater, incl_internet, incl_tv, incl_electricity, incl_furniture, incl_elec_appliance, allow_housepets, allow_smokers, property_size, amount_bedroom, amount_bathroom, amount_terrace, amount_balcony, amount_private_parking, elevator, handicap_accomm, created, last_modified FROM dwelling_unit_all_fields WHERE dwelling_unit_id = " + dwellingUnitID)) {
+
+            // exception caught, halt execution
+            System.exit(1);
+        }
+
+        // create CachedRowSet
         try {
-            Class.forName(DB_DRIVER);
-            con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            crs = new CachedRowSetImpl();
+            crs = dbInterface.getRowSet();
 
-            String sql = "SELECT * FROM dwelling_unit WHERE dwelling_unit_id = ?";
-
-            pst = con.prepareStatement(sql);
-
-            pst.setInt(1, duID);
-
-            rs = pst.executeQuery();
-
-
-
-            while (rs.next()) {
+            while (crs.next()) {
 
                 // Generell informasjon om bolig
-                dwellingUnitID = rs.getInt("dwelling_unit_id");
-                isAvailable = rs.getBoolean("available");
-                propertyOwner = rs.getLong("property_owner");
-                dwellingType = rs.getString("dwelling_type");
-                size = rs.getInt("size");
-                street = rs.getString("street");
-                streetNo = rs.getString("street_no");
-                zipCode = rs.getInt("zip_code");
-                monthlyPrice = rs.getInt("monthly_price");
-                depositumPrice = rs.getInt("depositum");
+                dwellingUnitID = crs.getInt("dwelling_unit_id");
+                isAvailable = crs.getBoolean("available");
+                propertyOwner = crs.getString("property_owner");
+                dwellingType = crs.getString("dwelling_type");
+                size = crs.getInt("size");
+                street = crs.getString("street");
+                streetNo = crs.getString("street_no");
+                zipCode = crs.getInt("zip_code");
+                area = crs.getString("area");
+                township = crs.getString("township");
+                county = crs.getString("county");
+                monthlyPrice = crs.getInt("monthly_price");
+                depositumPrice = crs.getInt("depositum");
 
                 // Inkludert i leiepris
-                inclusiveWarmup = rs.getBoolean("incl_warmup");
-                inclusiveWarmWater = rs.getBoolean("incl_warmwater");
-                inclusiveInternet = rs.getBoolean("incl_internet");
-                inclusiveCableTV = rs.getBoolean("incl_tv");
-                inclusiveElectricity = rs.getBoolean("incl_electricity");
-                inclusiveFurniture = rs.getBoolean("incl_furniture");
-                inclusiveElectricAppliances = rs.getBoolean("incl_elec_appliance");
+                inclusiveWarmup = crs.getBoolean("incl_warmup");
+                inclusiveWarmWater = crs.getBoolean("incl_warmwater");
+                inclusiveInternet = crs.getBoolean("incl_internet");
+                inclusiveCableTV = crs.getBoolean("incl_tv");
+                inclusiveElectricity = crs.getBoolean("incl_electricity");
+                inclusiveFurniture = crs.getBoolean("incl_furniture");
+                inclusiveElectricAppliances = crs.getBoolean("incl_elec_appliance");
 
                 // Hva er ikke tillat
-                allowHousepets = rs.getBoolean("allow_housepets");
-                allowSmokers = rs.getBoolean("allow_smokers");
+                allowHousepets = crs.getBoolean("allow_housepets");
+                allowSmokers = crs.getBoolean("allow_smokers");
 
                 // Detaljert informasjon
-                propertySize = rs.getInt("property_size");
-                amountOfBedrooms = rs.getInt("amount_bedroom");
-                amountOfBathrooms = rs.getInt("amount_bathroom");
-                amountOfTerraces = rs.getInt("amount_terrace");
-                amountOfBalconies = rs.getInt("amount_balcony");
-                amountOfPrivateParking = rs.getInt("amount_private_parking");
-                hasElevator = rs.getBoolean("elevator");
-                hasHandicapAccommodation = rs.getBoolean("handicap_accomm");
+                propertySize = crs.getInt("property_size");
+                amountOfBedrooms = crs.getInt("amount_bedroom");
+                amountOfBathrooms = crs.getInt("amount_bathroom");
+                amountOfTerraces = crs.getInt("amount_terrace");
+                amountOfBalconies = crs.getInt("amount_balcony");
+                amountOfPrivateParking = crs.getInt("amount_private_parking");
+                hasElevator = crs.getBoolean("elevator");
+                hasHandicapAccommodation = crs.getBoolean("handicap_accomm");
 
                 // Timestamps
-                created = rs.getDate("created");
-                lastModified = rs.getDate("last_modified");
+                created = crs.getTimestamp("created");
+                lastModified = crs.getTimestamp("last_modified");
 
 
-                System.out.println("BoligID:" + dwellingUnitID);
-                System.out.println("Ledig:" + isAvailable);
-                System.out.println("Boligeier:" + propertyOwner);
-                System.out.println("Boligtype:" + dwellingType);
-                System.out.println("Størrelse:" + size);
-                System.out.println("Gate:" + street);
-                System.out.println("Nummer:" + streetNo);
-                System.out.println("Postnummer:" + zipCode);
-                System.out.println("Månedspris:" + monthlyPrice);
-                System.out.println("Depositum:" + depositumPrice);
+                System.out.println("BoligID: " + dwellingUnitID);
+                System.out.println("Ledig: " + isAvailable);
+                System.out.println("Boligeier: " + propertyOwner);
+                System.out.println("Boligtype: " + dwellingType);
+                System.out.println("Størrelse: " + size);
+                System.out.println("Gate: " + street);
+                System.out.println("Nummer: " + streetNo);
+                System.out.println("Postnummer: " + zipCode);
+                System.out.println("Poststed: " + area);
+                System.out.println("Kommune: " + township);
+                System.out.println("Fylke: " + county);
+                System.out.println("Månedspris: " + monthlyPrice);
+                System.out.println("Depositum: " + depositumPrice);
+                System.out.println("\n /////// END OF DWELLING UNIT //////// \n");
             }
+        } catch (SQLException se) {
+            System.out.println("SQL Exception Error ved innhenting av data.");
+        }
+    }
+
+    // Oppdateringsmetode for Stringverdier
+    public void updateStringValue(String columnName, String value) throws SQLException {
+        try {
+            // Hopper til øverste rad
+            crs.first();
+
+            // Oppdaterer felt
+            crs.updateString(columnName, value);
+            System.out.println("UpdateString...");
+            crs.updateRow();
+            System.out.println("UpdateRow...");
 
         }
-        catch (Exception e) {
-            System.out.println(e);
+        catch (SQLException s) {
+            System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
         }
+    }
 
-        finally {
+    // Oppdateringsmetode for Intverdier
+    public void updateIntValue(String columnName, int value) throws SQLException {
+        try {
+            // Hopper til øverste rad
+            crs.first();
 
-            if (pst != null) {
-                pst.close();
-            }
+            // Oppdaterer felt
+            crs.updateInt(columnName, value);
+            System.out.println("UpdateInt...");
+            crs.updateRow();
+            System.out.println("UpdateRow...");
 
-            if (con != null) {
-                con.close();
-            }
+        }
+        catch (SQLException s) {
+            System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+        }
+    }
+
+    // Oppdateringsmetode for Booleanverdier
+    public void updateBooleanValue(String columnName, boolean value) throws SQLException {
+        try {
+            // Hopper til øverste rad
+            crs.first();
+
+            // Oppdaterer felt
+            crs.updateBoolean(columnName, value);
+            System.out.println("UpdateBoolean...");
+            crs.updateRow();
+            System.out.println("UpdateRow...");
+
+        }
+        catch (SQLException s) {
+            System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+        }
+    }
+
+    // Sender de oppdaterte feltene til databasen
+    public void commitChanges() {
+        if (dbInterface.commitToDatabase(crs)) {
+            System.out.println("Successfully committed to the database.");
+        }
+        else {
+            System.out.println("Error: Could NOT commit to the database.");
         }
     }
 
@@ -152,7 +212,7 @@ public class DwellingUnit {
         return isAvailable;
     }
 
-    public long getPropertyOwner() {
+    public String getPropertyOwner() {
         return propertyOwner;
     }
 
@@ -178,6 +238,18 @@ public class DwellingUnit {
 
     public int getZipCode() {
         return zipCode;
+    }
+
+    public String getArea()  {
+        return area;
+    }
+
+    public String getTownship()  {
+        return township;
+    }
+
+    public String getCounty()  {
+        return county;
     }
 
     public int getMonthlyPrice() {
@@ -256,11 +328,11 @@ public class DwellingUnit {
         return hasHandicapAccommodation;
     }
 
-    public Date getCreatedDate()  {
+    public Timestamp getCreatedDate()  {
         return created;
     }
 
-    public Date getLastModifiedDate()  {
+    public Timestamp getLastModifiedDate()  {
         return lastModified;
     }
 
@@ -274,6 +346,6 @@ public class DwellingUnit {
             // SET available = newStatus
             // WHERE dwelling_unit_id LIKE duID
         }
-
+        return true;
     }
 }
