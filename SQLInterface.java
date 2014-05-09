@@ -14,11 +14,12 @@ public class SQLInterface {
     private CachedRowSetImpl crs;
 
     public SQLInterface() {
+
     }
 
     public boolean execQuery(String query) {
-        Statement stmt = null;
         Connection conn = null;
+        Statement stmt = null;
         ResultSet resultSet = null;
 
         try {
@@ -40,9 +41,11 @@ public class SQLInterface {
             return true;
 
         } catch (SQLException se) {
+            System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
             return false;
 
         } catch (Exception e) {
+            System.out.println("\tLocalizedMessage: " + e.getLocalizedMessage());
             return false;
         }
     }

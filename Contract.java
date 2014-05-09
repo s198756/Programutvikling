@@ -8,6 +8,9 @@ import java.util.Date;
 
 public class Contract {
 
+    // Tabellnavn
+    private static final String TABLENAME = "contract";
+
     // Generell informasjon
     private int contractID;                             // Kontrakt ID
     private int dwellingUnitID;                         // Bolig ID
@@ -26,74 +29,189 @@ public class Contract {
 
     // Oppretter SQLInterface
     private SQLInterface dbInterface = new SQLInterface();
-    private CachedRowSetImpl crs;
 
-    public Contract (int cID) {
-        contractID = cID;
-    }
+    // Oppretter CachedRowSet og radnummer
+    private CachedRowSetImpl cachedRowSet;
+    private int currentRowNumber = 0;
+    private int nextRowNumber;
+    private int previousRowNumber;
 
-    // Metode som innhenter alle dataverdier tilhørende kontrakten
-    public void startQuery() throws SQLException {
+    public Contract () {
 
-        // create SQLInterface object
-        // execute query
+        // Utfører SQL-query
         if (!dbInterface.execQuery(
-                "SELECT contract_id, dwelling_unit_id, renter, broker, valid, paid_depositum, signed_by_renter, signed_by_broker, in_effect_date, expiration_date, created, last_modified FROM contract WHERE contract_id = " + contractID)) {
+                "SELECT contract_id, dwelling_unit_id, renter, broker, valid, paid_depositum, signed_by_renter, signed_by_broker, in_effect_date, expiration_date, created, last_modified FROM contract")) {
 
-            // exception caught, halt execution
+            // Stenger programmet ved feil
             System.exit(1);
         }
 
-        // create CachedRowSet
+        // Lager CachedRowSet av SQL-queryen
         try {
-            crs = new CachedRowSetImpl();
-            crs = dbInterface.getRowSet();
-
-            while (crs.next()) {
-                // Generell informasjon om person
-                contractID = crs.getInt("contract_id");
-                dwellingUnitID = crs.getInt("dwelling_unit_id");
-                renter = crs.getString("renter");
-                broker = crs.getString("broker");
-                isValid = crs.getBoolean("valid");
-                hasPaidDepositum = crs.getBoolean("paid_depositum");
-                isSignedByRenter = crs.getBoolean("signed_by_renter");
-                isSignedByBroker = crs.getBoolean("signed_by_broker");
-                inEffectDate = crs.getDate("in_effect_date");
-                expirationDate = crs.getDate("expiration_date");
-
-                // Timestamps
-                created = crs.getTimestamp("created");
-                lastModified = crs.getTimestamp("last_modified");
-
-                System.out.println("Kontrakt ID:" + contractID);
-                System.out.println("Leietaker:" + renter);
-                System.out.println("Megler:" + broker);
-                System.out.println("Gyldig:" + isValid);
-                System.out.println("Innbetalt depositum:" + hasPaidDepositum);
-                System.out.println("Signert av leietaker:" + isSignedByRenter);
-                System.out.println("Signert av megler:" + isSignedByBroker);
-                System.out.println("Startdato:" + inEffectDate);
-                System.out.println("Sluttdato:" + expirationDate);
-                System.out.println("\n /////// END OF CONTRACT //////// \n");
-            }
+            cachedRowSet = new CachedRowSetImpl();
+            cachedRowSet = dbInterface.getRowSet();
+            cachedRowSet.setTableName(TABLENAME);
+            System.out.println("Etter konstruktør: " + getCurrentRowNumber() + " CachedRow: " + cachedRowSet.getRow());
         }
         catch (SQLException se) {
-            System.out.println("SQL Exception Error ved innhenting av data.");
+            System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+        }
+    }
+
+    // Innlasting av person med nåværende radnummer
+    public void refreshValues() throws SQLException {
+        try {
+            // Leser av verdier
+
+            // Generell informasjon om kontrakt
+            contractID = cachedRowSet.getInt("contract_id");
+            dwellingUnitID = cachedRowSet.getInt("dwelling_unit_id");
+            renter = cachedRowSet.getString("renter");
+            broker = cachedRowSet.getString("broker");
+            isValid = cachedRowSet.getBoolean("valid");
+            hasPaidDepositum = cachedRowSet.getBoolean("paid_depositum");
+            isSignedByRenter = cachedRowSet.getBoolean("signed_by_renter");
+            isSignedByBroker = cachedRowSet.getBoolean("signed_by_broker");
+            inEffectDate = cachedRowSet.getDate("in_effect_date");
+            expirationDate = cachedRowSet.getDate("expiration_date");
+
+            // Timestamps
+            created = cachedRowSet.getTimestamp("created");
+            lastModified = cachedRowSet.getTimestamp("last_modified");
+
+        } catch (SQLException se) {
+            System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+        }
+
+        // Printer ut verdier
+        System.out.println("Kontrakt ID:" + contractID);
+        System.out.println("Leietaker:" + renter);
+        System.out.println("Megler:" + broker);
+        System.out.println("Gyldig:" + isValid);
+        System.out.println("Innbetalt depositum:" + hasPaidDepositum);
+        System.out.println("Signert av leietaker:" + isSignedByRenter);
+        System.out.println("Signert av megler:" + isSignedByBroker);
+        System.out.println("Startdato:" + inEffectDate);
+        System.out.println("Sluttdato:" + expirationDate);
+        System.out.println("\n /////// END OF CONTRACT //////// \n");
+
+
+        System.out.println("Etter refreshValues: " + getCurrentRowNumber() + " CachedRow: " + cachedRowSet.getRow());
+    }
+
+    // Innlasting av kontrakt med et spesifisert radnummer
+    public void jumpToContract(int rowNo) throws SQLException {
+        currentRowNumber = rowNo;
+        previousRowNumber -= currentRowNumber - 1;
+        nextRowNumber += currentRowNumber + 1;
+        try {
+            cachedRowSet.absolute(currentRowNumber);
+            refreshValues();
+        }
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+    // Innlasting av neste kontrakt
+    public void nextContract() throws SQLException {
+        currentRowNumber += 1;
+        previousRowNumber = currentRowNumber - 1;
+        nextRowNumber = currentRowNumber + 1;
+        try {
+            System.out.println("Hopper til neste kontrakt. \n");
+            cachedRowSet.next();
+            refreshValues();
+        }
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+    // Innlasting av forrige kontrakt
+    public void previousContract() throws SQLException {
+        currentRowNumber -= 1;
+        previousRowNumber = currentRowNumber - 1;
+        nextRowNumber = currentRowNumber + 1;
+        try {
+            System.out.println("Hopper tilbake til forrige kontrakt. \n");
+            cachedRowSet.previous();
+            refreshValues();
+        }
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+    // Flytter pekeren til en innsettingsrad. Må kalles opp ved opprettelse av ny kontrakt.
+    public void moveToInsertRow() throws SQLException {
+        try {
+            cachedRowSet.moveToInsertRow();
+            System.out.println("Peker flyttet til innsettingsrad. \n");
+        }
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+    // Setter inn nåværende innsettingsrad. Pekeren må befinne seg på en innsettingsrad.
+    public void insertRow() throws SQLException {
+        try {
+            cachedRowSet.insertRow();
+            System.out.println("Raden ble lagret i cache. \n");
+        }
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+    // Pekeren flyttes til nåværende rad. Har kun effekt om pekeren er på en innsettingsrad.
+    public void moveToCurrentRow() throws SQLException {
+        try {
+            cachedRowSet.moveToCurrentRow();
+            System.out.println("Peker flyttet til nåværende rad. \n");
+        }
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+    // Kansellerer alle oppdateringer
+    public void cancelUpdates() throws SQLException {
+        try {
+            cachedRowSet.cancelRowUpdates();
+            System.out.println("Alle endringer lagret i cachen ble fjernet. \n");
+        }
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+    // Søk opp kontrakt
+    public void findContract(int cID) throws SQLException {
+        try {
+            // Søker igjennom tabellen
+            while(cachedRowSet.next()) {
+                if(cID == cachedRowSet.getInt("contract_id")) {
+                    System.out.println("Kontrakten ble funnet. Flytter pekeren til kontrakten og henter verdier");
+                    jumpToContract(cachedRowSet.getRow());
+                    return;
+                }
+            }
+            System.out.println("Fant ikke kontrakten med den angitte nummeret.");
+            return;
+        }
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
     }
 
     // Oppdateringsmetode for Stringverdier
     public void updateStringValue(String columnName, String value) throws SQLException {
         try {
-            // Hopper til øverste rad
-            crs.first();
-
             // Oppdaterer felt
-            crs.updateString(columnName, value);
-            System.out.println("UpdateString...");
-            crs.updateRow();
-            System.out.println("UpdateRow...");
+            cachedRowSet.updateString(columnName, value);
+            System.out.println("String-verdi oppdatert. \n");
 
         }
         catch (SQLException s) {
@@ -104,14 +222,9 @@ public class Contract {
     // Oppdateringsmetode for Intverdier
     public void updateIntValue(String columnName, int value) throws SQLException {
         try {
-            // Hopper til øverste rad
-            crs.first();
-
             // Oppdaterer felt
-            crs.updateInt(columnName, value);
-            System.out.println("UpdateInt...");
-            crs.updateRow();
-            System.out.println("UpdateRow...");
+            cachedRowSet.updateInt(columnName, value);
+            System.out.println("Int-verdi oppdatert. \n");
 
         }
         catch (SQLException s) {
@@ -122,14 +235,9 @@ public class Contract {
     // Oppdateringsmetode for Booleanverdier
     public void updateBooleanValue(String columnName, boolean value) throws SQLException {
         try {
-            // Hopper til øverste rad
-            crs.first();
-
             // Oppdaterer felt
-            crs.updateBoolean(columnName, value);
-            System.out.println("UpdateBoolean...");
-            crs.updateRow();
-            System.out.println("UpdateRow...");
+            cachedRowSet.updateBoolean(columnName, value);
+            System.out.println("Boolean-verdi oppdatert. \n");
 
         }
         catch (SQLException s) {
@@ -137,54 +245,95 @@ public class Contract {
         }
     }
 
-    // Returnerer "true" dersom kravene til å oppnå en gyldig kontrakt oppfylles.
-    public boolean checkValidation() {
-
-        // Oppretter kontraktens megler
-        Person verifyBroker = new Person(broker);
-
-        // Oppretter kontraktens leietaker
-        Person verifyRenter = new Person(renter);
-
-        // Oppretter kontraktens bolig
-        DwellingUnit vDwellingUnit = new DwellingUnit(dwellingUnitID);
-
-        // Oppretter nåværende dato
-        Date now = new Date();
-
-        if (!verifyBroker.getIsBroker()) {
-            System.out.println("Feil: Angitt megler i kontrakten er ingen megler.");
-            return false;
+    // Oppdaterer nåværende rad
+    public void updateRow() throws SQLException {
+        try {
+            cachedRowSet.updateRow();
+            System.out.println("Oppdatering av raden ble lagret i cache. \n");
         }
-
-        else if (verifyRenter.getPersonNo().equals(vDwellingUnit.getPropertyOwner())) {
-            System.out.println("Feil: Leietakeren kan ikke leie sin egen bolig.");
-            return false;
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
+    }
 
-        else if (verifyRenter.getPersonNo().equals(verifyBroker.getPersonNo())) {
-            System.out.println("Feil: Leietakeren kan ikke være samme person som megleren.");
-            return false;
+    // Sletter nåværende rad
+    public void deleteRow() throws SQLException {
+        try {
+            cachedRowSet.deleteRow();
+            System.out.println("Raden ble slettet fra cache. \n");
         }
-
-        else if (!isSignedByRenter) {
-            System.out.println("Feil: Kontrakten er ikke signert av leietaker.");
-            return false;
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
+    }
 
-        else if (!isSignedByBroker) {
-            System.out.println("Feil: Kontrakten er ikke signert av megler.");
-            return false;
+    // Sender de oppdaterte feltene til databasen
+    public void acceptChanges() throws SQLException {
+        if (dbInterface.commitToDatabase(cachedRowSet)) {
+            System.out.println("Alle endringer i cache ble sendt til databasen.");
         }
-
-        else if(!now.after(inEffectDate) || !now.before(expirationDate)) {
-            System.out.println("Feil: Dagens dato er ikke innenfor kontraktperioden.");
-            return false;
-        }
-
         else {
-            return true;
+            System.out.println("Feil: Kunne ikke sende cache-endringer til databasen. \n");
         }
+    }
+
+    // Returnerer "true" dersom kravene til å oppnå en gyldig kontrakt oppfylles.
+    public boolean checkValidation() throws SQLException {
+
+        try {
+            // Oppretter kontraktens megler
+            Person verifyBroker = new Person();
+            verifyBroker.findPerson(broker);
+
+            // Oppretter kontraktens leietaker
+            Person verifyRenter = new Person();
+            verifyRenter.findPerson(renter);
+
+            // Oppretter kontraktens bolig
+            DwellingUnit vDwellingUnit = new DwellingUnit();
+            vDwellingUnit.findDwellingUnit(dwellingUnitID);
+
+            // Oppretter nåværende dato
+            Date now = new Date();
+
+            if (!verifyBroker.getIsBroker()) {
+                System.out.println("Feil: Angitt megler i kontrakten er ingen megler.");
+                return false;
+            }
+
+            else if (verifyRenter.getPersonNo().equals(vDwellingUnit.getPropertyOwner())) {
+                System.out.println("Feil: Leietakeren kan ikke leie sin egen bolig.");
+                return false;
+            }
+
+            else if (verifyRenter.getPersonNo().equals(verifyBroker.getPersonNo())) {
+                System.out.println("Feil: Leietakeren kan ikke være samme person som megleren.");
+                return false;
+            }
+
+            else if (!isSignedByRenter) {
+                System.out.println("Feil: Kontrakten er ikke signert av leietaker.");
+                return false;
+            }
+
+            else if (!isSignedByBroker) {
+                System.out.println("Feil: Kontrakten er ikke signert av megler.");
+                return false;
+            }
+
+            else if(!now.after(inEffectDate) || !now.before(expirationDate)) {
+                System.out.println("Feil: Dagens dato er ikke innenfor kontraktperioden.");
+                return false;
+            }
+
+            else {
+                return true;
+            }
+        }
+        catch (SQLException e){
+            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+        return false;
     }
 
     // Oppdaterer kontraktfeltet "valid" i databasen til korrekt status.
@@ -195,21 +344,19 @@ public class Contract {
         }
         else if (checkValidation()) {
             try {
-                // Hopper til øverste rad
-                crs.first();
-
                 // Oppdaterer felt
-                crs.updateBoolean("valid", true);
-                System.out.println("UpdateBoolean...");
-                crs.updateRow();
-                System.out.println("UpdateRow...");
+                cachedRowSet.moveToCurrentRow();
+                cachedRowSet.updateBoolean("valid", true);
+                System.out.println("Boolean-verdi oppdatert. \n");
+                cachedRowSet.updateRow();
+                System.out.println("Oppdatering av raden ble lagret i cache. \n");
             }
             catch (SQLException s) {
                 System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
             }
 
             // Sender oppdatering til databasen
-            commitChanges();
+            acceptChanges();
             System.out.println("Kontrakten er nå oppdatert til status: Gyldig.");
 
             return;
@@ -223,21 +370,19 @@ public class Contract {
         else
         {
             try {
-                // Hopper til øverste rad
-                crs.first();
-
                 // Oppdaterer felt
-                crs.updateBoolean("valid", false);
-                System.out.println("UpdateBoolean...");
-                crs.updateRow();
-                System.out.println("UpdateRow...");
+                cachedRowSet.moveToCurrentRow();
+                cachedRowSet.updateBoolean("valid", false);
+                System.out.println("Boolean-verdi oppdatert. \n");
+                cachedRowSet.updateRow();
+                System.out.println("Oppdatering av raden ble lagret i cache. \n");
             }
             catch (SQLException s) {
                 System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
             }
 
             // Sender oppdatering til databasen
-            commitChanges();
+            acceptChanges();
             System.out.println("Kontrakten er nå oppdatert til status: Ugyldig.");
         }
     }
@@ -246,7 +391,8 @@ public class Contract {
     public void setDwellingUnitAvailability() throws SQLException {
 
         // Oppretter kontraktens bolig
-        DwellingUnit du = new DwellingUnit(dwellingUnitID);
+        DwellingUnit du = new DwellingUnit();
+        du.findDwellingUnit(dwellingUnitID);
 
         if (checkValidation() && !du.getIsAvailable()) {
             System.out.println("Boligen har allerede status OPPTATT.");
@@ -255,8 +401,9 @@ public class Contract {
 
         else if (checkValidation() && du.getIsAvailable()) {
             try {
+                du.moveToCurrentRow();
                 du.updateBooleanValue("available", false);
-                du.commitChanges();
+                du.acceptChanges();
                 System.out.println("Endret status på boligen tilknyttet kontrakten til: OPPTATT");
             }
             catch (SQLException e) {
@@ -270,8 +417,9 @@ public class Contract {
         }
         else {
             try {
+                du.moveToCurrentRow();
                 du.updateBooleanValue("available", true);
-                du.commitChanges();
+                du.acceptChanges();
                 System.out.println("Endret status på boligen tilknyttet kontrakten til: LEDIG");
             }
             catch (SQLException e) {
@@ -280,18 +428,8 @@ public class Contract {
         }
     }
 
-    // Sender de oppdaterte feltene til databasen
-    public void commitChanges() {
-        if (dbInterface.commitToDatabase(crs)) {
-            System.out.println("Successfully committed to the database.");
-        }
-        else {
-            System.out.println("Error: Could NOT commit to the database.");
-        }
-    }
-
-    public CachedRowSetImpl getCachedRowSet() {
-        return crs;
+    public int getCurrentRowNumber() {
+        return currentRowNumber;
     }
 
     public int getContractID()  {
