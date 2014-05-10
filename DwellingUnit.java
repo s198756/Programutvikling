@@ -3,6 +3,7 @@
  */
 
 import com.sun.rowset.CachedRowSetImpl;
+import javax.sql.rowset.FilteredRowSet;
 import java.sql.*;
 
 public class DwellingUnit {
@@ -53,17 +54,27 @@ public class DwellingUnit {
     private Timestamp created;                          // Dato/tidspunkt for opprettelse
     private Timestamp lastModified;                     // Dato/tidspunkt for sist endring
 
-    // Oppretter SQLInterface
-    private SQLInterface dbInterface = new SQLInterface();
+    // Initialiserer SQLInterface
+    private SQLInterface dbInterface;
 
-    // Oppretter CachedRowSet og radnummer
+    // Initialiserer FilteredRowSet
+    private FilteredRowSet filteredRowSet;
+
+    // Initialiserer CachedRowSet
     private CachedRowSetImpl cachedRowSet;
-    private int currentRowNumber = 0;
+
+    // Initialiserer sjekk om klassens RowSet er av typen "Cached" eller "Filtered"
+    private boolean rowSetTypeIsFiltered;
+
+    // Oppretter radnummer (til pekeren)
+    private int currentRowNumber = 1;
     private int nextRowNumber;
     private int previousRowNumber;
 
-
+    // Konstruktør som oppretter et nytt CachedRowSet som inneholder ALLE registrerte boliger fra databasen
     public DwellingUnit () {
+        // Oppretter nytt SQLInterface
+        dbInterface = new SQLInterface();
 
         // Utfører SQL-query
         if (!dbInterface.execQuery(
@@ -78,59 +89,148 @@ public class DwellingUnit {
             cachedRowSet = new CachedRowSetImpl();
             cachedRowSet = dbInterface.getRowSet();
             cachedRowSet.setTableName(TABLENAME);
-            System.out.println("Etter konstruktør: " + getCurrentRowNumber() + " CachedRow: " + cachedRowSet.getRow());
+            cachedRowSet.first();
+
+            // Nåværende rowSet er av typen "Cached"
+            rowSetTypeIsFiltered = false;
         }
         catch (SQLException se) {
             System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
         }
     }
 
-    // Innlasting av person med nåværende radnummer
+    // Konstruktør som tar imot eksisterende SQLInterface, CachedRowSet og radnummer (et ufiltrert søk)
+    public DwellingUnit (SQLInterface dbInt, CachedRowSetImpl crs, int rowID) throws SQLException {
+        // Setter inn SQLInterface
+        dbInterface = dbInt;
+
+        cachedRowSet = crs;
+        cachedRowSet.setTableName(TABLENAME);
+
+        // Setter inn mottatt radnummer
+        currentRowNumber = rowID;
+
+        // Setter pekeren på radnummeret
+        jumpToDwellingUnit(rowID);
+
+        // Nåværende rowSet er av typen "Cached"
+        rowSetTypeIsFiltered = false;
+    }
+
+    // Konstruktør som tar imot eksisterende SQLInterface, FilteredRowSet og radnummer (et filtrert søk)
+    public DwellingUnit (SQLInterface dbInt, FilteredRowSet frs, int rowID) throws SQLException {
+        // Setter inn SQLInterface
+        dbInterface = dbInt;
+
+        // Setter inn FilteredRowSet og tabellnavn
+        filteredRowSet = frs;
+        filteredRowSet.setTableName(TABLENAME);
+
+        // Setter inn mottatt radnummer
+        currentRowNumber = rowID;
+
+        // Setter pekeren på radnummeret
+        jumpToDwellingUnit(rowID);
+
+        // Nåværende rowSet er av typen "Filtered"
+        rowSetTypeIsFiltered = true;
+    }
+
+    // Innlasting av bolig med nåværende radnummer
     public void refreshValues() throws SQLException {
-        try {
-            // Leser av verdier
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Leser av verdier
 
-            // Generell informasjon om bolig
-            dwellingUnitID = cachedRowSet.getInt("dwelling_unit_id");
-            isAvailable = cachedRowSet.getBoolean("available");
-            propertyOwner = cachedRowSet.getString("property_owner");
-            dwellingType = cachedRowSet.getString("dwelling_type");
-            size = cachedRowSet.getInt("size");
-            street = cachedRowSet.getString("street");
-            streetNo = cachedRowSet.getString("street_no");
-            zipCode = cachedRowSet.getInt("zip_code");
-            monthlyPrice = cachedRowSet.getInt("monthly_price");
-            depositumPrice = cachedRowSet.getInt("depositum");
+                // Generell informasjon om bolig
+                dwellingUnitID = filteredRowSet.getInt("dwelling_unit_id");
+                isAvailable = filteredRowSet.getBoolean("available");
+                propertyOwner = filteredRowSet.getString("property_owner");
+                dwellingType = filteredRowSet.getString("dwelling_type");
+                size = filteredRowSet.getInt("size");
+                street = filteredRowSet.getString("street");
+                streetNo = filteredRowSet.getString("street_no");
+                zipCode = filteredRowSet.getInt("zip_code");
+                monthlyPrice = filteredRowSet.getInt("monthly_price");
+                depositumPrice = filteredRowSet.getInt("depositum");
 
-            // Inkludert i leiepris
-            inclusiveWarmup = cachedRowSet.getBoolean("incl_warmup");
-            inclusiveWarmWater = cachedRowSet.getBoolean("incl_warmwater");
-            inclusiveInternet = cachedRowSet.getBoolean("incl_internet");
-            inclusiveCableTV = cachedRowSet.getBoolean("incl_tv");
-            inclusiveElectricity = cachedRowSet.getBoolean("incl_electricity");
-            inclusiveFurniture = cachedRowSet.getBoolean("incl_furniture");
-            inclusiveElectricAppliances = cachedRowSet.getBoolean("incl_elec_appliance");
+                // Inkludert i leiepris
+                inclusiveWarmup = filteredRowSet.getBoolean("incl_warmup");
+                inclusiveWarmWater = filteredRowSet.getBoolean("incl_warmwater");
+                inclusiveInternet = filteredRowSet.getBoolean("incl_internet");
+                inclusiveCableTV = filteredRowSet.getBoolean("incl_tv");
+                inclusiveElectricity = filteredRowSet.getBoolean("incl_electricity");
+                inclusiveFurniture = filteredRowSet.getBoolean("incl_furniture");
+                inclusiveElectricAppliances = filteredRowSet.getBoolean("incl_elec_appliance");
 
-            // Hva er ikke tillat
-            allowHousepets = cachedRowSet.getBoolean("allow_housepets");
-            allowSmokers = cachedRowSet.getBoolean("allow_smokers");
+                // Hva er ikke tillat
+                allowHousepets = filteredRowSet.getBoolean("allow_housepets");
+                allowSmokers = filteredRowSet.getBoolean("allow_smokers");
 
-            // Detaljert informasjon
-            propertySize = cachedRowSet.getInt("property_size");
-            amountOfBedrooms = cachedRowSet.getInt("amount_bedroom");
-            amountOfBathrooms = cachedRowSet.getInt("amount_bathroom");
-            amountOfTerraces = cachedRowSet.getInt("amount_terrace");
-            amountOfBalconies = cachedRowSet.getInt("amount_balcony");
-            amountOfPrivateParking = cachedRowSet.getInt("amount_private_parking");
-            hasElevator = cachedRowSet.getBoolean("elevator");
-            hasHandicapAccommodation = cachedRowSet.getBoolean("handicap_accomm");
+                // Detaljert informasjon
+                propertySize = filteredRowSet.getInt("property_size");
+                amountOfBedrooms = filteredRowSet.getInt("amount_bedroom");
+                amountOfBathrooms = filteredRowSet.getInt("amount_bathroom");
+                amountOfTerraces = filteredRowSet.getInt("amount_terrace");
+                amountOfBalconies = filteredRowSet.getInt("amount_balcony");
+                amountOfPrivateParking = filteredRowSet.getInt("amount_private_parking");
+                hasElevator = filteredRowSet.getBoolean("elevator");
+                hasHandicapAccommodation = filteredRowSet.getBoolean("handicap_accomm");
 
-            // Timestamps
-            created = cachedRowSet.getTimestamp("created");
-            lastModified = cachedRowSet.getTimestamp("last_modified");
+                // Timestamps
+                created = filteredRowSet.getTimestamp("created");
+                lastModified = filteredRowSet.getTimestamp("last_modified");
 
-        } catch (SQLException se) {
-            System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+            } catch (SQLException se) {
+                System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+            }
+        }
+        else {
+            try {
+                // Leser av verdier
+
+                // Generell informasjon om bolig
+                dwellingUnitID = cachedRowSet.getInt("dwelling_unit_id");
+                isAvailable = cachedRowSet.getBoolean("available");
+                propertyOwner = cachedRowSet.getString("property_owner");
+                dwellingType = cachedRowSet.getString("dwelling_type");
+                size = cachedRowSet.getInt("size");
+                street = cachedRowSet.getString("street");
+                streetNo = cachedRowSet.getString("street_no");
+                zipCode = cachedRowSet.getInt("zip_code");
+                monthlyPrice = cachedRowSet.getInt("monthly_price");
+                depositumPrice = cachedRowSet.getInt("depositum");
+
+                // Inkludert i leiepris
+                inclusiveWarmup = cachedRowSet.getBoolean("incl_warmup");
+                inclusiveWarmWater = cachedRowSet.getBoolean("incl_warmwater");
+                inclusiveInternet = cachedRowSet.getBoolean("incl_internet");
+                inclusiveCableTV = cachedRowSet.getBoolean("incl_tv");
+                inclusiveElectricity = cachedRowSet.getBoolean("incl_electricity");
+                inclusiveFurniture = cachedRowSet.getBoolean("incl_furniture");
+                inclusiveElectricAppliances = cachedRowSet.getBoolean("incl_elec_appliance");
+
+                // Hva er ikke tillat
+                allowHousepets = cachedRowSet.getBoolean("allow_housepets");
+                allowSmokers = cachedRowSet.getBoolean("allow_smokers");
+
+                // Detaljert informasjon
+                propertySize = cachedRowSet.getInt("property_size");
+                amountOfBedrooms = cachedRowSet.getInt("amount_bedroom");
+                amountOfBathrooms = cachedRowSet.getInt("amount_bathroom");
+                amountOfTerraces = cachedRowSet.getInt("amount_terrace");
+                amountOfBalconies = cachedRowSet.getInt("amount_balcony");
+                amountOfPrivateParking = cachedRowSet.getInt("amount_private_parking");
+                hasElevator = cachedRowSet.getBoolean("elevator");
+                hasHandicapAccommodation = cachedRowSet.getBoolean("handicap_accomm");
+
+                // Timestamps
+                created = cachedRowSet.getTimestamp("created");
+                lastModified = cachedRowSet.getTimestamp("last_modified");
+
+            } catch (SQLException se) {
+                System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+            }
         }
 
         // Innhenting av stedsinformasjon
@@ -159,21 +259,65 @@ public class DwellingUnit {
         System.out.println("Månedspris: " + monthlyPrice);
         System.out.println("Depositum: " + depositumPrice);
         System.out.println("\n /////// END OF DWELLING UNIT //////// \n");
-
-        System.out.println("Etter refreshValues: " + getCurrentRowNumber() + " CachedRow: " + cachedRowSet.getRow());
     }
 
-    // Innlasting av bnolig med et spesifisert radnummer
+    // Innlasting av bolig med et spesifisert radnummer
     public void jumpToDwellingUnit(int rowNo) throws SQLException {
         currentRowNumber = rowNo;
         previousRowNumber -= currentRowNumber - 1;
         nextRowNumber += currentRowNumber + 1;
+        String messageJumpToDwellingUnit = "Forsøker å hente ut verdier til boligen på rad " + currentRowNumber + ".\n";
         try {
-            cachedRowSet.absolute(currentRowNumber);
+            System.out.println(messageJumpToDwellingUnit);
             refreshValues();
-        }
-        catch (SQLException e){
+        } catch (SQLException e){
             System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+    // Søk opp bolig med bolig ID (unik verdi)
+    public void findDwellingUnitWithID(int duID) throws SQLException {
+
+        String messageWhenFindDwellingUnitWithID = "Boligen ble funnet. Flytter pekeren til boligen og henter verdier. \n";
+        String messageWhenCouldNotFindDwellingUnitWithID = "Fant ikke boligen med den angitte bolig IDen. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Hopper først til toppen av tabellen
+                filteredRowSet.beforeFirst();
+
+                // Søker igjennom rowSet
+                while (filteredRowSet.next()) {
+                    if (duID == filteredRowSet.getInt("dwelling_unit_id")) {
+                        System.out.println(messageWhenFindDwellingUnitWithID);
+                        jumpToDwellingUnit(filteredRowSet.getRow());
+                        return;
+                    }
+                }
+                System.out.println(messageWhenCouldNotFindDwellingUnitWithID);
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
+        }
+
+        else {
+            try {
+                // Hopper først til toppen av tabellen
+                cachedRowSet.beforeFirst();
+
+                // Søker igjennom tabellen
+                while(cachedRowSet.next()) {
+                    if(duID == cachedRowSet.getInt("dwelling_unit_id")) {
+                        System.out.println(messageWhenFindDwellingUnitWithID);
+                        jumpToDwellingUnit(cachedRowSet.getRow());
+                        return;
+                    }
+                }
+                System.out.println(messageWhenCouldNotFindDwellingUnitWithID);
+
+            } catch (SQLException e){
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
     }
 
@@ -182,13 +326,25 @@ public class DwellingUnit {
         currentRowNumber += 1;
         previousRowNumber = currentRowNumber - 1;
         nextRowNumber = currentRowNumber + 1;
-        try {
-            System.out.println("Hopper til neste bolig. \n");
-            cachedRowSet.next();
-            refreshValues();
+        String messageWhenNextDwellingUnit = "Hopper til neste bolig. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                System.out.println(messageWhenNextDwellingUnit);
+                filteredRowSet.next();
+                refreshValues();
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
-        catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        else {
+            try {
+                System.out.println(messageWhenNextDwellingUnit);
+                cachedRowSet.next();
+                refreshValues();
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
     }
 
@@ -197,147 +353,266 @@ public class DwellingUnit {
         currentRowNumber -= 1;
         previousRowNumber = currentRowNumber - 1;
         nextRowNumber = currentRowNumber + 1;
-        try {
-            System.out.println("Hopper tilbake til forrige bolig. \n");
-            cachedRowSet.previous();
-            refreshValues();
+        String messageWhenPreviousDwellingUnit = "Hopper til forrige bolig. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                System.out.println(messageWhenPreviousDwellingUnit);
+                filteredRowSet.previous();
+                refreshValues();
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
-        catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        else {
+            try {
+                System.out.println(messageWhenPreviousDwellingUnit);
+                cachedRowSet.previous();
+                refreshValues();
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
     }
 
     // Flytter pekeren til en innsettingsrad. Må kalles opp ved opprettelse av ny bolig.
     public void moveToInsertRow() throws SQLException {
-        try {
-            cachedRowSet.moveToInsertRow();
-            System.out.println("Peker flyttet til innsettingsrad. \n");
+
+        String messageWhenMoveToInsertRow = "Peker flyttet til innsettingsrad. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                filteredRowSet.moveToInsertRow();
+                System.out.println(messageWhenMoveToInsertRow);
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
-        catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        else {
+            try {
+                cachedRowSet.moveToInsertRow();
+                System.out.println(messageWhenMoveToInsertRow);
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
     }
 
     // Setter inn nåværende innsettingsrad. Pekeren må befinne seg på en innsettingsrad.
     public void insertRow() throws SQLException {
-        try {
-            cachedRowSet.insertRow();
-            System.out.println("Raden ble lagret i cache. \n");
+
+        String messageWhenInsertRow = "Raden ble lagret i cache. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                filteredRowSet.insertRow();
+                System.out.println(messageWhenInsertRow);
+            } catch (SQLException e){
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
-        catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        else {
+            try {
+                cachedRowSet.insertRow();
+                System.out.println(messageWhenInsertRow);
+            } catch (SQLException e){
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
     }
 
     // Pekeren flyttes til nåværende rad. Har kun effekt om pekeren er på en innsettingsrad.
     public void moveToCurrentRow() throws SQLException {
-        try {
-            cachedRowSet.moveToCurrentRow();
-            System.out.println("Peker flyttet til nåværende rad. \n");
+
+        String messageWhenMovedToRow = "Peker flyttet til nåværende rad. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                filteredRowSet.moveToCurrentRow();
+                System.out.println(messageWhenMovedToRow);
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
-        catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        else {
+            try {
+                cachedRowSet.moveToCurrentRow();
+                System.out.println(messageWhenMovedToRow);
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
     }
 
     // Kansellerer alle oppdateringer
     public void cancelUpdates() throws SQLException {
-        try {
-            cachedRowSet.cancelRowUpdates();
-            System.out.println("Alle endringer lagret i cachen ble fjernet. \n");
-        }
-        catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
-        }
-    }
 
-    // Søk opp bolig
-    public void findDwellingUnit(int duID) throws SQLException {
-        try {
-            // Søker igjennom tabellen
-            while(cachedRowSet.next()) {
-                if(duID == cachedRowSet.getInt("dwelling_unit_id")) {
-                    System.out.println("Boligen ble funnet. Flytter pekeren til boligen og henter verdier");
-                    jumpToDwellingUnit(cachedRowSet.getRow());
-                    return;
-                }
+        String messageWhenCancelUpdates = "Alle endringer lagret i cachen ble fjernet. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                filteredRowSet.cancelRowUpdates();
+                System.out.println(messageWhenCancelUpdates);
+            } catch (SQLException e){
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
             }
-            System.out.println("Fant ikke boligen med det angitte nummeret.");
-            return;
         }
-        catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        else {
+            try {
+                cachedRowSet.cancelRowUpdates();
+                System.out.println(messageWhenCancelUpdates);
+            } catch (SQLException e){
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
     }
 
     // Oppdateringsmetode for Stringverdier
     public void updateStringValue(String columnName, String value) throws SQLException {
-        try {
-            // Oppdaterer felt
-            cachedRowSet.updateString(columnName, value);
-            System.out.println("String-verdi oppdatert. \n");
 
+        String messageWhenUpdateStringValue = "String-verdi oppdatert. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Oppdaterer felt til FilteredRowset
+                filteredRowSet.updateString(columnName, value);
+                System.out.println(messageWhenUpdateStringValue);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+            }
         }
-        catch (SQLException s) {
-            System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+        else {
+            try {
+                // Oppdaterer felt til CachedRowSet
+                cachedRowSet.updateString(columnName, value);
+                System.out.println(messageWhenUpdateStringValue);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+            }
         }
     }
 
     // Oppdateringsmetode for Intverdier
     public void updateIntValue(String columnName, int value) throws SQLException {
-        try {
-            // Oppdaterer felt
-            cachedRowSet.updateInt(columnName, value);
-            System.out.println("Int-verdi oppdatert. \n");
 
+        String messageWhenUpdateIntValue = "Int-verdi oppdatert. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Oppdaterer felt til FilteredRowSet
+                filteredRowSet.updateInt(columnName, value);
+                System.out.println(messageWhenUpdateIntValue);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+            }
         }
-        catch (SQLException s) {
-            System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+        else {
+            try {
+                // Oppdaterer felt til CachedRowSet
+                cachedRowSet.updateInt(columnName, value);
+                System.out.println(messageWhenUpdateIntValue);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+            }
         }
     }
 
     // Oppdateringsmetode for Booleanverdier
     public void updateBooleanValue(String columnName, boolean value) throws SQLException {
-        try {
-            // Oppdaterer felt
-            cachedRowSet.updateBoolean(columnName, value);
-            System.out.println("Boolean-verdi oppdatert. \n");
 
+        String messageWhenUpdateBooleanValue = "Boolean-verdi oppdatert. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Oppdaterer felt til FilteredRowSet
+                cachedRowSet.updateBoolean(columnName, value);
+                System.out.println(messageWhenUpdateBooleanValue);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+            }
         }
-        catch (SQLException s) {
-            System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+        else {
+            try {
+                // Oppdaterer felt til CachedRowSet
+                cachedRowSet.updateBoolean(columnName, value);
+                System.out.println(messageWhenUpdateBooleanValue);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+            }
         }
     }
 
     // Oppdaterer nåværende rad
     public void updateRow() throws SQLException {
-        try {
-            cachedRowSet.updateRow();
-            System.out.println("Oppdatering av raden ble lagret i cache. \n");
+
+        String messageWhenUpdateRow = "Oppdatering av raden ble lagret i cache. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                filteredRowSet.updateRow();
+                System.out.println(messageWhenUpdateRow);
+            } catch (SQLException e){
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
-        catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        else {
+            try {
+                cachedRowSet.updateRow();
+                System.out.println(messageWhenUpdateRow);
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
     }
 
     // Sletter nåværende rad
     public void deleteRow() throws SQLException {
-        try {
-            cachedRowSet.deleteRow();
-            System.out.println("Raden ble slettet fra cache. \n");
+
+        String messageWhenDeleteRow = "Raden ble slettet fra cache. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                filteredRowSet.deleteRow();
+                System.out.println(messageWhenDeleteRow);
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
-        catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        else {
+            try {
+                cachedRowSet.deleteRow();
+                System.out.println(messageWhenDeleteRow);
+            } catch (SQLException e) {
+                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
         }
     }
 
     // Sender de oppdaterte feltene til databasen
     public void acceptChanges() throws SQLException {
-        if (dbInterface.commitToDatabase(cachedRowSet)) {
-            System.out.println("Alle endringer i cache ble sendt til databasen.");
+
+        String messageWhenAcceptChanges = "Alle endringer i cache ble sendt til databasen. \n";
+        String errorMessageWhenAcceptChanges = "FEIL: Kunne ikke sende cache-endringer til databasen. \n";
+
+        if (rowSetTypeIsFiltered) {
+            if (dbInterface.commitToDatabase(filteredRowSet)) {
+                System.out.println(messageWhenAcceptChanges);
+            } else {
+                System.out.println(errorMessageWhenAcceptChanges);
+            }
         }
         else {
-            System.out.println("Feil: Kunne ikke sende cache-endringer til databasen. \n");
+            if (dbInterface.commitToDatabase(cachedRowSet)) {
+                System.out.println(messageWhenAcceptChanges);
+            } else {
+                System.out.println(errorMessageWhenAcceptChanges);
+            }
         }
     }
 
@@ -475,18 +750,5 @@ public class DwellingUnit {
 
     public Timestamp getLastModifiedDate()  {
         return lastModified;
-    }
-
-    public boolean updateAvailability(boolean newStatus)   {
-
-        if (newStatus == isAvailable) {
-            return true;
-        }
-        else {
-            // UPDATE dwelling_unit
-            // SET available = newStatus
-            // WHERE dwelling_unit_id LIKE duID
-        }
-        return true;
     }
 }

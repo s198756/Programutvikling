@@ -2,6 +2,8 @@
  * Created by Sebastian Ramsland on 06.05.2014.
  */
 import com.sun.rowset.CachedRowSetImpl;
+
+import javax.sql.rowset.FilteredRowSet;
 import java.sql.*;
 
 public class SQLInterface {
@@ -64,6 +66,30 @@ public class SQLInterface {
 
             // propagate changes and close connection
             crs.acceptChanges(conn);
+            conn.close();
+
+            return true;
+
+        } catch (SQLException se) {
+            System.out.println(se.getLocalizedMessage());
+            return false;
+
+        } catch (Exception e) {
+            System.out.println(e.getLocalizedMessage());
+            return false;
+        }
+    }
+
+    public boolean commitToDatabase(FilteredRowSet frs) {
+        Connection conn = null;
+
+        try {
+            Class.forName(DB_DRIVER).newInstance();
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            conn.setAutoCommit(false);  // Need to disable auto-commit for CachedRowSet
+
+            // propagate changes and close connection
+            frs.acceptChanges(conn);
             conn.close();
 
             return true;
