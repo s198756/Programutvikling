@@ -3,14 +3,15 @@ package Superiore;
 /**
  * Created by Dragon on 28.04.14.
  */
-import com.sun.rowset.CachedRowSetImpl;
 
 import java.sql.*;
-import javax.sql.rowset.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.util.Vector;
 
 
 public class Persontabell {
+    static final String DRIVER = "com.mysql.jdbc.Driver";
     static final String USER = "sebastianramsla3";
     static final String PASSWORD = "pjW8iUnH";
     static final String URL = "sebastianramsla3.mysql.domeneshop.no";
@@ -18,125 +19,121 @@ public class Persontabell {
     private Statement stmt = null;
     private ResultSet rs = null;
 
-    public CachedRowSet visAltIPersontabellen(){
-        CachedRowSetImpl c = null;
+    public DefaultTableModel visAltIPersontabellen() {
         String query = "SELECT * FROM persons";
+        Vector columnnames = new Vector();
+        Vector rows = new Vector();
 
-        try{
+        try {
+            Class.forName(DRIVER);
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             stmt = con.createStatement();
             rs = stmt.executeQuery(query);
-            c = new CachedRowSetImpl();
-            c.populate(rs);
-        }catch(SQLException sqle){
+            ResultSetMetaData metadata = rs.getMetaData();
+            int numberofcolumns = metadata.getColumnCount();
+
+            for (int column = 0; column < numberofcolumns; column++) {
+                columnnames.addElement(metadata.getColumnLabel(column + 1));
+            }
+
+            while (rs.next()) {
+                Vector newrows = new Vector();
+                for (int i = 1; i <= numberofcolumns; i++) {
+                    newrows.addElement(rs.getObject(i));
+                }
+                rows.addElement(newrows);
+            }
+            stmt.close();
+            rs.close();
+            con.close();
+
+        } catch (SQLException sqle) {
             sqle.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                rs.close();
-                stmt.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
-        }
-        if(c == null){
-            JOptionPane.showMessageDialog(null, "Personlisten er tom!");
             return null;
-        }else{
-            return c;
+        }catch(ClassNotFoundException cnfe){
+            cnfe.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Klasse ikke funnet!");
         }
+        DefaultTableModel everything = new DefaultTableModel(rows, columnnames);
+
+        return everything;
     }
 
-    public CachedRowSet finnPersonVedAASkriveInnPersonnummer(int id){
-        CachedRowSet c = null;
+    public DefaultTableModel finnPersonVedAASkriveInnPersonnummer(int id) {
         PreparedStatement ps = null;
         String query = "SELECT * FROM persons WHERE person_no LIKE ?";
+        Vector columnnames = new Vector();
+        Vector rows = new Vector();
 
-        try{
+        try {
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             ps = con.prepareStatement(query);
             ps.setInt(1, id);
             rs = ps.executeQuery();
-            c = new CachedRowSetImpl();
-            c.populate(rs);
-            c.setPageSize(30);
-        }catch(SQLException sqle){
+            ResultSetMetaData metadata = rs.getMetaData();
+            int numberofcolumns = metadata.getColumnCount();
+
+            for (int column = 0; column < numberofcolumns; column++) {
+                columnnames.addElement(metadata.getColumnLabel(column + 1));
+            }
+
+            while (rs.next()) {
+                Vector newrows = new Vector();
+                for (int i = 1; i <= numberofcolumns; i++) {
+                    newrows.addElement(rs.getObject(i));
+                }
+                rows.addElement(rows);
+            }
+            rs.close();
+            stmt.close();
+            con.close();
+
+        } catch (SQLException sqle) {
             sqle.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                rs.close();
-                stmt.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
         }
-        if(c == null){
-            JOptionPane.showMessageDialog(null, "Ingen personer har denne id-en!");
-            return null;
-        }
-        return c;
+        DefaultTableModel personID = new DefaultTableModel(rows, columnnames);
+
+        return personID;
     }
 
-    public CachedRowSet finnPersonVedAASkriveInnEtternavn(String navn){
-        CachedRowSet c = null;
+    public DefaultTableModel finnPersonVedAASkriveInnEtternavn(String navn) {
         PreparedStatement ps = null;
         String query = "SELECT * FROM persons WHERE surname LIKE ?";
+        Vector columnnames = new Vector();
+        Vector rows = new Vector();
 
-        try{
+        try {
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             ps = con.prepareStatement(query);
             ps.setString(1, navn);
             rs = ps.executeQuery();
-            c = new CachedRowSetImpl();
-            c.populate(rs);
-            c.setPageSize(30);
-        }catch(SQLException sqle){
+            ResultSetMetaData metadata = rs.getMetaData();
+            int numberofcolumns = metadata.getColumnCount();
+
+            for (int column = 0; column < numberofcolumns; column++) {
+                columnnames.addElement(metadata.getColumnLabel(column + 1));
+            }
+
+            while (rs.next()) {
+                Vector newrows = new Vector();
+                for (int i = 1; i <= numberofcolumns; i++) {
+                    newrows.addElement(rs.getObject(i));
+                }
+                rows.addElement(rows);
+            }
+            rs.close();
+            stmt.close();
+            con.close();
+
+        } catch (SQLException sqle) {
             sqle.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                rs.close();
-                stmt.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
         }
-        if(c == null){
-            JOptionPane.showMessageDialog(null, "Ingen personer har dette navnet!");
-            return null;
-        }
-        return c;
-    }
+        DefaultTableModel personName = new DefaultTableModel(rows, columnnames);
 
-    public void settRoykeVerdiTilTrue(int id ){
-        String query = "UPDATE persons SET smoker LIKE ? WHERE person_no LIKE ?";
-        PreparedStatement ps = null;
-
-        try{
-            con = DriverManager.getConnection(URL, USER, PASSWORD);
-            ps = con.prepareStatement(query);
-            ps.setBoolean(1, true);
-            ps.setInt(2, id);
-            ps.executeUpdate();
-        }catch(SQLException sqle){
-            sqle.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                ps.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
-        }
+        return personName;
     }
 
     public void settInnNyPersonIPersonlisten(String pnr, boolean broker, String fornavn, String etternavn, String adresse, int gatenr, int zip, String telefon, String mail){
