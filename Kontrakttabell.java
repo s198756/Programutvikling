@@ -1,13 +1,15 @@
-package Superiore;
+
 
 import java.sql.*;
-import javax.sql.rowset.*;
 import javax.swing.*;
-import com.sun.rowset.CachedRowSetImpl;
+import java.util.Vector;
+import javax.swing.table.DefaultTableModel;
+
 /**
  * Created by Dragon on 28.04.14.
  */
 public class Kontrakttabell {
+    static final String DRIVER = "com.mysql.jdbc.Driver";
     static final String USER = "sebastianramsla3";
     static final String PASSWORD = "pjW8iUnH";
     static final String URL = "sebastianramsla3.mysql.domeneshop.no";
@@ -15,131 +17,92 @@ public class Kontrakttabell {
     private Statement stmt = null;
     private ResultSet rs = null;
 
-    public CachedRowSet visAltIKontrakttabellen(){
-        CachedRowSetImpl c = null;
+    public DefaultTableModel visAltIKontrakttabellen(){
         String query = "SELECT * FROM contracts";
+        Vector columnnames = new Vector();
+        Vector rows = new Vector();
 
         try{
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             stmt = con.createStatement();
             rs = stmt.executeQuery(query);
-            c = new CachedRowSetImpl();
-            c.populate(rs);
+            ResultSetMetaData metadata = rs.getMetaData();
+            int numberofcolumns = metadata.getColumnCount();
+
+
+            for (int column = 0; column < numberofcolumns; column++) {
+                columnnames.addElement(metadata.getColumnLabel(column + 1));
+            }
+
+            while (rs.next()) {
+                Vector newrows = new Vector();
+                for (int i = 1; i <= numberofcolumns; i++) {
+                    newrows.addElement(rs.getObject(i));
+                }
+                rows.addElement(rows);
+            }
+            rs.close();
+            stmt.close();
+            con.close();
+
         }catch(SQLException sqle){
             sqle.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                rs.close();
-                stmt.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
         }
-        if(c == null){
-            JOptionPane.showMessageDialog(null, "Kontraktlisten er tom!");
-            return null;
-        }else{
-            return c;
-        }
+        DefaultTableModel everything = new DefaultTableModel(rows, columnnames);
+
+        return everything;
     }
 
-    public CachedRowSet finnKontraktVedAASkriveInnId(int id){
-        CachedRowSet c = null;
-        PreparedStatement ps = null;
-        String query = "SELECT * FROM contracts WHERE contract_id LIKE ?";
-
-        try{
-            con = DriverManager.getConnection(URL, USER, PASSWORD);
-            ps = con.prepareStatement(query);
-            ps.setInt(1, id);
-            rs = ps.executeQuery();
-            c = new CachedRowSetImpl();
-            c.populate(rs);
-            c.setPageSize(30);
-        }catch(SQLException sqle){
-            sqle.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                rs.close();
-                stmt.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
-        }
-        if(c == null){
-            JOptionPane.showMessageDialog(null, "Ingen kontrakter har denne id-en!");
-            return null;
-        }
-        return c;
-    }
-
-    public CachedRowSet finnKontraktVedAASkriveInnBoligId(int id){
-        CachedRowSet c = null;
+    public DefaultTableModel finnKontraktVedAASkriveInnBoligId(int id){
         PreparedStatement ps = null;
         String query = "SELECT * FROM contracts WHERE dwelling_unit_id LIKE ?";
+        Vector rows = new Vector();
+        Vector columnnames = new Vector();
 
         try{
+            Class.forName(DRIVER);
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             ps = con.prepareStatement(query);
             ps.setInt(1, id);
             rs = ps.executeQuery();
-            c = new CachedRowSetImpl();
-            c.populate(rs);
-            c.setPageSize(30);
+            ResultSetMetaData metadata = rs.getMetaData();
+            int numberofcolumns = metadata.getColumnCount();
+
+
+            for (int column = 0; column < numberofcolumns; column++) {
+                columnnames.addElement(metadata.getColumnLabel(column + 1));
+            }
+
+
+            while (rs.next()) {
+                Vector newrows = new Vector();
+                for (int i = 1; i <= numberofcolumns; i++) {
+                    newrows.addElement(rs.getObject(i));
+                }
+                rows.addElement(newrows);
+            }
+            rs.close();
+            stmt.close();
+            con.close();
+
         }catch(SQLException sqle){
             sqle.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                rs.close();
-                stmt.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
+        }catch(ClassNotFoundException cnfe){
+            cnfe.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error! Driverklasse ikke funnet!");
         }
-        if(c == null){
-            JOptionPane.showMessageDialog(null, "Ingen kontrakter er lagd med denne adressen!");
-            return null;
-        }
-        return c;
-    }
+        DefaultTableModel contractID = new DefaultTableModel(rows, columnnames);
 
-    public void settGyldighetsVerdiTilTrue(int id ){
-        String query = "UPDATE contracts SET valid LIKE ? WHERE contract_id LIKE ?";
-        PreparedStatement ps = null;
-
-        try{
-            con = DriverManager.getConnection(URL, USER, PASSWORD);
-            ps = con.prepareStatement(query);
-            ps.setBoolean(1, true);
-            ps.setInt(2, id);
-            ps.executeUpdate();
-        }catch(SQLException sqle){
-            sqle.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-        }finally{
-            try{
-                ps.close();
-                con.close();
-            }catch(SQLException sqle){
-                sqle.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
-            }
-        }
+        return contractID;
     }
 
     public void settInnNyKontraktIKontraktlisten(int id, String renter, String broker, Date in_effect_date, Date expiration_date){
         String query = "SELECT * FROM contracts";
 
         try{
+            Class.forName(DRIVER);
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
             rs = stmt.executeQuery(query);
@@ -154,6 +117,7 @@ public class Kontrakttabell {
         }catch(SQLException sqle){
             sqle.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error! Feil i SQL!");
+        }catch(ClassNotFoundException cnfe){
         }finally{
             try{
                 rs.close();
