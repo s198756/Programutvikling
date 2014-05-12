@@ -46,6 +46,9 @@ public class Person {
     // Initialiserer CachedRowSet
     private CachedRowSetImpl cachedRowSet;
 
+    // Initialiserer String som viser programmeldinger til vinduene.
+    private String infoText;
+
     // Initialiserer sjekk om klassens RowSet er av typen "Cached" eller "Filtered"
     private boolean rowSetTypeIsFiltered;
 
@@ -72,13 +75,14 @@ public class Person {
             cachedRowSet = new CachedRowSetImpl();
             cachedRowSet = dbInterface.getRowSet();
             cachedRowSet.setTableName(TABLENAME);
+            int [] keys = {1, 9, 10};
+            cachedRowSet.setKeyColumns(keys);
             cachedRowSet.first();
-            System.out.println("Konstruktør... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
 
             // Nåværende rowSet er av typen "Cached"
             rowSetTypeIsFiltered = false;
         } catch (SQLException se) {
-            System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+            infoText = "Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage();
         }
     }
 
@@ -155,7 +159,7 @@ public class Person {
                 lastModifiedDate = filteredRowSet.getTimestamp("last_modified");
 
             } catch (SQLException se) {
-                System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+                infoText = "Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage();
             }
         }
         else {
@@ -192,7 +196,7 @@ public class Person {
                 lastModifiedDate = cachedRowSet.getTimestamp("last_modified");
 
             } catch (SQLException se) {
-                System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+                infoText = "Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage();
             }
         }
 
@@ -206,6 +210,7 @@ public class Person {
         category = location.getCategory();
 
         // Printer ut verdier
+        /*
         System.out.println("Personnummer: " + personNo);
         System.out.println("Megler: " + isBroker);
         System.out.println("Fornavn: " + firstname);
@@ -229,6 +234,7 @@ public class Person {
         System.out.println("Opprettet: " + createdDate);
         System.out.println("Sist endret: " + lastModifiedDate);
         System.out.println("\n /////// END OF PERSON //////// \n");
+        */
     }
 
     // Innlasting av person med et spesifisert radnummer
@@ -238,10 +244,10 @@ public class Person {
         nextRowNumber += currentRowNumber + 1;
         String messageJumpToPerson = "Forsøker å hente ut verdier til personen på rad " + currentRowNumber + ".\n";
         try {
-            System.out.println(messageJumpToPerson);
+            infoText = messageJumpToPerson;
             refreshValues();
         } catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
         }
     }
 
@@ -259,14 +265,14 @@ public class Person {
                 // Søker igjennom rowSet
                 while (filteredRowSet.next()) {
                     if (pNo.equals(filteredRowSet.getString("person_no"))) {
-                        System.out.println(messageWhenFindPerson);
+                        infoText = messageWhenFindPerson;
                         jumpToPerson(filteredRowSet.getRow());
                         return;
                     }
                 }
-                System.out.println(messageWhenCouldNotFindPersonWithPersonNo);
+                infoText = messageWhenCouldNotFindPersonWithPersonNo;
             } catch (SQLException e) {
-                    System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
 
@@ -278,15 +284,15 @@ public class Person {
                 // Søker igjennom tabellen
                 while(cachedRowSet.next()) {
                     if(pNo.equals(cachedRowSet.getString("person_no"))) {
-                        System.out.println(messageWhenFindPerson);
+                        infoText = messageWhenFindPerson;
                         jumpToPerson(cachedRowSet.getRow());
                         return;
                     }
                 }
-                System.out.println(messageWhenCouldNotFindPersonWithPersonNo);
+                infoText = messageWhenCouldNotFindPersonWithPersonNo;
 
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -305,14 +311,14 @@ public class Person {
                 // Søker igjennom tabellen
                 while (filteredRowSet.next()) {
                     if (telNo == filteredRowSet.getLong("telephone")) {
-                        System.out.println(messageWhenFindPerson);
+                        infoText = messageWhenFindPerson;
                         jumpToPerson(filteredRowSet.getRow());
                         return;
                     }
                 }
-                System.out.println(messageWhenCouldNotFindPersonWithTelephoneNo);
+                infoText = messageWhenCouldNotFindPersonWithTelephoneNo;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
@@ -323,14 +329,14 @@ public class Person {
                 // Søker igjennom tabellen
                 while (cachedRowSet.next()) {
                     if (telNo == cachedRowSet.getLong("telephone")) {
-                        System.out.println(messageWhenFindPerson);
+                        infoText = messageWhenFindPerson;
                         jumpToPerson(cachedRowSet.getRow());
                         return;
                     }
                 }
-                System.out.println(messageWhenCouldNotFindPersonWithTelephoneNo);
+                infoText = messageWhenCouldNotFindPersonWithTelephoneNo;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -349,14 +355,14 @@ public class Person {
                 // Søker igjennom tabellen
                 while(filteredRowSet.next()) {
                     if(mail.equals(filteredRowSet.getString("email"))) {
-                        System.out.println(messageWhenFindPerson);
+                        infoText = messageWhenFindPerson;
                         jumpToPerson(filteredRowSet.getRow());
                         return;
                     }
                 }
-                System.out.println(messageWhenCouldNotFindPersonWithEmail);
+                infoText = messageWhenCouldNotFindPersonWithEmail;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
@@ -367,14 +373,14 @@ public class Person {
                 // Søker igjennom tabellen
                 while(cachedRowSet.next()) {
                     if(mail.equals(cachedRowSet.getString("email"))) {
-                        System.out.println(messageWhenFindPerson);
+                        infoText = messageWhenFindPerson;
                         jumpToPerson(cachedRowSet.getRow());
                         return;
                     }
                 }
-                System.out.println(messageWhenCouldNotFindPersonWithEmail);
+                infoText = messageWhenCouldNotFindPersonWithEmail;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -384,24 +390,24 @@ public class Person {
         currentRowNumber += 1;
         previousRowNumber = currentRowNumber - 1;
         nextRowNumber = currentRowNumber + 1;
-        String messageWhenNextPerson = "Hopper til neste person. \n";
+        String messageWhenNextPerson = "Fant fram til neste person. \n";
 
         if (rowSetTypeIsFiltered) {
             try {
-                System.out.println(messageWhenNextPerson);
+                infoText = messageWhenNextPerson;
                 filteredRowSet.next();
                 refreshValues();
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
-                System.out.println(messageWhenNextPerson);
+                infoText = messageWhenNextPerson;
                 cachedRowSet.next();
                 refreshValues();
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -411,24 +417,24 @@ public class Person {
         currentRowNumber -= 1;
         previousRowNumber = currentRowNumber - 1;
         nextRowNumber = currentRowNumber + 1;
-        String messageWhenPreviousPerson = "Hopper tilbake til forrige person. \n";
+        String messageWhenPreviousPerson = "Fant fram til forrige person. \n";
 
         if (rowSetTypeIsFiltered) {
             try {
-                System.out.println(messageWhenPreviousPerson);
+                infoText = messageWhenPreviousPerson;
                 filteredRowSet.previous();
                 refreshValues();
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
-                System.out.println(messageWhenPreviousPerson);
+                infoText = messageWhenPreviousPerson;
                 cachedRowSet.previous();
                 refreshValues();
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -436,22 +442,22 @@ public class Person {
     // Flytter pekeren til en innsettingsrad. Må kalles opp ved opprettelse av ny person.
     public void moveToInsertRow() throws SQLException {
 
-        String messageWhenMoveToInsertRow = "Peker flyttet til innsettingsrad. \n";
+        String messageWhenMoveToInsertRow = "Fyll ut de påkrevde feltene og trykk 'Lagre' for å opprette en ny person. \n";
 
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.moveToInsertRow();
-                System.out.println(messageWhenMoveToInsertRow);
+                infoText = messageWhenMoveToInsertRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.moveToInsertRow();
-                System.out.println(messageWhenMoveToInsertRow);
+                infoText = messageWhenMoveToInsertRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -464,17 +470,17 @@ public class Person {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.insertRow();
-                System.out.println(messageWhenInsertRow);
+                infoText = messageWhenInsertRow;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.insertRow();
-                System.out.println(messageWhenInsertRow);
+                infoText = messageWhenInsertRow;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -487,18 +493,18 @@ public class Person {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.moveToCurrentRow();
-                System.out.println(messageWhenMovedToRow);
+                infoText = messageWhenMovedToRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.moveToCurrentRow();
-                System.out.println(messageWhenMovedToRow);
+                infoText = messageWhenMovedToRow;
 
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -506,49 +512,42 @@ public class Person {
     // Kansellerer alle oppdateringer
     public void cancelUpdates() throws SQLException {
 
-        String messageWhenCancelUpdates = "Alle endringer lagret i cachen ble fjernet. \n";
+        String messageWhenCancelUpdates = "Alle endringer ble avbrutt. \n";
 
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.cancelRowUpdates();
-                System.out.println(messageWhenCancelUpdates);
+                infoText = messageWhenCancelUpdates;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.cancelRowUpdates();
-                System.out.println(messageWhenCancelUpdates);
+                infoText = messageWhenCancelUpdates;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
 
     // Oppdateringsmetode for Automatiske verdier
     public void updateAuto(String columnName) throws SQLException {
-
-        String messageWhenUpdateNull = "Auto-verdi oppdatert. \n";
-
         if (rowSetTypeIsFiltered) {
             try {
                 // Oppdaterer felt til FilteredRowset
                 filteredRowSet.updateNull(columnName);
-                System.out.println(messageWhenUpdateNull);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
         else {
             try {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateNull(columnName);
-                System.out.println(messageWhenUpdateNull);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
     }
@@ -556,26 +555,20 @@ public class Person {
     // Oppdateringsmetode for Stringverdier
     public void updateStringValue(String columnName, String value) throws SQLException {
 
-        String messageWhenUpdateStringValue = "String-verdi oppdatert. \n";
-
         if (rowSetTypeIsFiltered) {
             try {
                 // Oppdaterer felt til FilteredRowset
                 filteredRowSet.updateString(columnName, value);
-                System.out.println(messageWhenUpdateStringValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
         else {
             try {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateString(columnName, value);
-                System.out.println(messageWhenUpdateStringValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
     }
@@ -583,28 +576,20 @@ public class Person {
     // Oppdateringsmetode for Intverdier
     public void updateIntValue(String columnName, int value) throws SQLException {
 
-        String messageWhenUpdateIntValue = "Int-verdi oppdatert. \n";
-
         if (rowSetTypeIsFiltered) {
             try {
                 // Oppdaterer felt til FilteredRowSet
                 filteredRowSet.updateInt(columnName, value);
-                System.out.println(messageWhenUpdateIntValue);
-                System.out.println("Update int value... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
-
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
         else {
             try {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateInt(columnName, value);
-                System.out.println(messageWhenUpdateIntValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
     }
@@ -612,26 +597,20 @@ public class Person {
     // Oppdateringsmetode for Booleanverdier
     public void updateBooleanValue(String columnName, boolean value) throws SQLException {
 
-        String messageWhenUpdateBooleanValue = "Boolean-verdi oppdatert. \n";
-
         if (rowSetTypeIsFiltered) {
             try {
                 // Oppdaterer felt til FilteredRowSet
                 cachedRowSet.updateBoolean(columnName, value);
-                System.out.println(messageWhenUpdateBooleanValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
         else {
             try {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateBoolean(columnName, value);
-                System.out.println(messageWhenUpdateBooleanValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
     }
@@ -644,17 +623,17 @@ public class Person {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.updateRow();
-                System.out.println(messageWhenUpdateRow);
+                infoText = messageWhenUpdateRow;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.updateRow();
-                System.out.println(messageWhenUpdateRow);
+                infoText = messageWhenUpdateRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -667,17 +646,17 @@ public class Person {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.deleteRow();
-                System.out.println(messageWhenDeleteRow);
+                infoText = messageWhenDeleteRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.deleteRow();
-                System.out.println(messageWhenDeleteRow);
+                infoText = messageWhenDeleteRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -685,21 +664,21 @@ public class Person {
     // Sender de oppdaterte feltene til databasen
     public void acceptChanges() throws SQLException {
 
-        String messageWhenAcceptChanges = "Alle endringer i cache ble sendt til databasen. \n";
-        String errorMessageWhenAcceptChanges = "FEIL: Kunne ikke sende cache-endringer til databasen. \n";
+        String messageWhenAcceptChanges = "Alle endringer ble sendt til databasen. \n";
+        String errorMessageWhenAcceptChanges = "FEIL: Kunne ikke sende endringer til databasen. \n";
 
         if (rowSetTypeIsFiltered) {
             if (dbInterface.commitToDatabase(filteredRowSet)) {
-                System.out.println(messageWhenAcceptChanges);
+                infoText = messageWhenAcceptChanges;
             } else {
-                System.out.println(errorMessageWhenAcceptChanges);
+                infoText = errorMessageWhenAcceptChanges;
             }
         }
         else {
             if (dbInterface.commitToDatabase(cachedRowSet)) {
-                System.out.println(messageWhenAcceptChanges);
+                infoText = messageWhenAcceptChanges;
             } else {
-                System.out.println(errorMessageWhenAcceptChanges);
+                infoText = errorMessageWhenAcceptChanges;
             }
         }
     }
@@ -713,7 +692,7 @@ public class Person {
     }
 
     public String getFullName() {
-        return firstname + " " + middlename + " " + surname;
+        return firstname + " " + getMiddleName() + " " + surname;
     }
 
     public String getFirstName() {
@@ -721,7 +700,16 @@ public class Person {
     }
 
     public String getMiddleName() {
-        return middlename;
+        if (middlename == null) {
+            return "";
+        }
+        else {
+            return middlename;
+        }
+    }
+
+    public String getInfoText() {
+        return infoText;
     }
 
     public String getSurName() {

@@ -89,6 +89,8 @@ public class DwellingUnit {
             cachedRowSet = new CachedRowSetImpl();
             cachedRowSet = dbInterface.getRowSet();
             cachedRowSet.setTableName(TABLENAME);
+            int [] keys = {1};
+            cachedRowSet.setKeyColumns(keys);
             cachedRowSet.first();
 
             // Nåværende rowSet er av typen "Cached"
@@ -105,6 +107,8 @@ public class DwellingUnit {
 
         cachedRowSet = crs;
         cachedRowSet.setTableName(TABLENAME);
+        int [] keys = {1};
+        cachedRowSet.setKeyColumns(keys);
 
         // Setter inn mottatt radnummer
         currentRowNumber = rowID;
@@ -124,6 +128,8 @@ public class DwellingUnit {
         // Setter inn FilteredRowSet og tabellnavn
         filteredRowSet = frs;
         filteredRowSet.setTableName(TABLENAME);
+        int [] keys = {1};
+        cachedRowSet.setKeyColumns(keys);
 
         // Setter inn mottatt radnummer
         currentRowNumber = rowID;

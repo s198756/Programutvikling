@@ -63,6 +63,8 @@ public class Contract {
             cachedRowSet = new CachedRowSetImpl();
             cachedRowSet = dbInterface.getRowSet();
             cachedRowSet.setTableName(TABLENAME);
+            int [] keys = {1};
+            cachedRowSet.setKeyColumns(keys);
             cachedRowSet.first();
             System.out.println("Konstruktør... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
 
@@ -81,6 +83,8 @@ public class Contract {
 
         cachedRowSet = crs;
         cachedRowSet.setTableName(TABLENAME);
+        int [] keys = {1};
+        cachedRowSet.setKeyColumns(keys);
 
         // Setter inn mottatt radnummer
         currentRowNumber = rowID;
@@ -100,6 +104,8 @@ public class Contract {
         // Setter inn FilteredRowSet og tabellnavn
         filteredRowSet = frs;
         filteredRowSet.setTableName(TABLENAME);
+        int [] keys = {1};
+        cachedRowSet.setKeyColumns(keys);
 
         // Setter inn mottatt radnummer
         currentRowNumber = rowID;
