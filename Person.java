@@ -73,6 +73,7 @@ public class Person {
             cachedRowSet = dbInterface.getRowSet();
             cachedRowSet.setTableName(TABLENAME);
             cachedRowSet.first();
+            System.out.println("Konstruktør... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
 
             // Nåværende rowSet er av typen "Cached"
             rowSetTypeIsFiltered = false;
@@ -495,6 +496,7 @@ public class Person {
             try {
                 cachedRowSet.moveToCurrentRow();
                 System.out.println(messageWhenMovedToRow);
+
             } catch (SQLException e) {
                 System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
             }
@@ -520,6 +522,33 @@ public class Person {
                 System.out.println(messageWhenCancelUpdates);
             } catch (SQLException e){
                 System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
+        }
+    }
+
+    // Oppdateringsmetode for Automatiske verdier
+    public void updateAuto(String columnName) throws SQLException {
+
+        String messageWhenUpdateNull = "Auto-verdi oppdatert. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Oppdaterer felt til FilteredRowset
+                filteredRowSet.updateNull(columnName);
+                System.out.println(messageWhenUpdateNull);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+            }
+        }
+        else {
+            try {
+                // Oppdaterer felt til CachedRowSet
+                cachedRowSet.updateNull(columnName);
+                System.out.println(messageWhenUpdateNull);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
             }
         }
     }
@@ -561,6 +590,8 @@ public class Person {
                 // Oppdaterer felt til FilteredRowSet
                 filteredRowSet.updateInt(columnName, value);
                 System.out.println(messageWhenUpdateIntValue);
+                System.out.println("Update int value... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
+
 
             } catch (SQLException s) {
                 System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());

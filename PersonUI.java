@@ -125,7 +125,7 @@ public class PersonUI {
             setPreferredSize(new Dimension(900, 600));
 
             // Ramme
-            setBorder(BorderFactory.createTitledBorder("Personalia"));
+            setBorder(BorderFactory.createTitledBorder("Informasjon"));
 
             // Viewport
             setViewportView(new DataFieldPanel());

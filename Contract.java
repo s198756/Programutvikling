@@ -2,7 +2,6 @@
  * Created by Sebastian Ramsland on 01.05.2014.
  */
 
-import com.sun.corba.se.pept.broker.Broker;
 import com.sun.rowset.CachedRowSetImpl;
 import javax.sql.rowset.FilteredRowSet;
 import java.sql.*;
@@ -65,6 +64,7 @@ public class Contract {
             cachedRowSet = dbInterface.getRowSet();
             cachedRowSet.setTableName(TABLENAME);
             cachedRowSet.first();
+            System.out.println("Konstruktør... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
 
             // Nåværende rowSet er av typen "Cached"
             rowSetTypeIsFiltered = false;
@@ -115,6 +115,9 @@ public class Contract {
     public void refreshValues() throws SQLException {
         if (rowSetTypeIsFiltered) {
             try {
+                // Hopper til riktig rad
+                cachedRowSet.absolute(currentRowNumber);
+
                 // Leser av verdier
 
                 // Generell informasjon om kontrakt
@@ -139,6 +142,9 @@ public class Contract {
         }
         else {
             try {
+                // Hopper til riktig rad
+                cachedRowSet.absolute(currentRowNumber);
+
                 // Leser av verdier
 
                 // Generell informasjon om kontrakt
@@ -306,6 +312,7 @@ public class Contract {
             try {
                 cachedRowSet.moveToInsertRow();
                 System.out.println(messageWhenMoveToInsertRow);
+                System.out.println("Move to insert row... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
             } catch (SQLException e) {
                 System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
             }
@@ -322,15 +329,17 @@ public class Contract {
                 filteredRowSet.insertRow();
                 System.out.println(messageWhenInsertRow);
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+
+                System.out.println("State: " + e.getSQLState() + "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
             }
         }
         else {
             try {
                 cachedRowSet.insertRow();
                 System.out.println(messageWhenInsertRow);
+                System.out.println("Insert row... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                System.out.println("State: " + e.getSQLState() + "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
             }
         }
     }
@@ -377,6 +386,33 @@ public class Contract {
                 System.out.println(messageWhenCancelUpdates);
             } catch (SQLException e){
                 System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
+        }
+    }
+
+    // Oppdateringsmetode for Automatiske verdier
+    public void updateAuto(String columnName) throws SQLException {
+
+        String messageWhenUpdateNull = "Automatisk verdi oppdatert. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Oppdaterer felt til FilteredRowset
+                filteredRowSet.updateNull(columnName);
+                System.out.println(messageWhenUpdateNull);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+            }
+        }
+        else {
+            try {
+                // Oppdaterer felt til CachedRowSet
+                cachedRowSet.updateNull(columnName);
+                System.out.println(messageWhenUpdateNull);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
             }
         }
     }
@@ -428,6 +464,8 @@ public class Contract {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateInt(columnName, value);
                 System.out.println(messageWhenUpdateIntValue);
+                System.out.println("Update int value... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
+
 
             } catch (SQLException s) {
                 System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());

@@ -93,8 +93,7 @@ public class DwellingUnit {
 
             // Nåværende rowSet er av typen "Cached"
             rowSetTypeIsFiltered = false;
-        }
-        catch (SQLException se) {
+        } catch (SQLException se) {
             System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
         }
     }
@@ -375,7 +374,7 @@ public class DwellingUnit {
         }
     }
 
-    // Flytter pekeren til en innsettingsrad. Må kalles opp ved opprettelse av ny bolig.
+    // Flytter pekeren til en innsettingsrad. Må kalles opp ved opprettelse av ny person.
     public void moveToInsertRow() throws SQLException {
 
         String messageWhenMoveToInsertRow = "Peker flyttet til innsettingsrad. \n";
@@ -463,6 +462,33 @@ public class DwellingUnit {
                 System.out.println(messageWhenCancelUpdates);
             } catch (SQLException e){
                 System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            }
+        }
+    }
+
+    // Oppdateringsmetode for Automatisk verdi
+    public void updateAuto(String columnName) throws SQLException {
+
+        String messageWhenUpdateStringValue = "Automatisk verdi oppdatert. \n";
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Oppdaterer felt til FilteredRowset
+                filteredRowSet.updateNull(columnName);
+                System.out.println(messageWhenUpdateStringValue);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+            }
+        }
+        else {
+            try {
+                // Oppdaterer felt til CachedRowSet
+                cachedRowSet.updateNull(columnName);
+                System.out.println(messageWhenUpdateStringValue);
+
+            } catch (SQLException s) {
+                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
             }
         }
     }
