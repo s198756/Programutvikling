@@ -45,6 +45,15 @@ public class Contract {
     private int nextRowNumber;
     private int previousRowNumber;
 
+    // Angir rowsettets antall rader
+    private int amountRows;
+
+    // Angir toppen av rowset
+    private static final int TOP_OF_ROWSET = 1;
+
+    // Initialiserer String som viser programmeldinger til vinduene.
+    private String infoText;
+
     // Konstruktør som oppretter et nytt CachedRowSet som inneholder ALLE registrerte kontrakter fra databasen
     public Contract () {
         // Oppretter nytt SQLInterface
@@ -65,14 +74,21 @@ public class Contract {
             cachedRowSet.setTableName(TABLENAME);
             int [] keys = {1};
             cachedRowSet.setKeyColumns(keys);
+
+            // Hopper til nederste rad for å finne antall rader
+            cachedRowSet.last();
+
+            // Henter ut antall rader
+            amountRows = cachedRowSet.getRow();
+
+            // Hopper tilbake til øverste rad
             cachedRowSet.first();
-            System.out.println("Konstruktør... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
 
             // Nåværende rowSet er av typen "Cached"
             rowSetTypeIsFiltered = false;
         }
         catch (SQLException se) {
-            System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+            infoText = "Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage();
         }
     }
 
@@ -85,6 +101,12 @@ public class Contract {
         cachedRowSet.setTableName(TABLENAME);
         int [] keys = {1};
         cachedRowSet.setKeyColumns(keys);
+
+        // Hopper til nederste rad for å finne antall rader
+        cachedRowSet.last();
+
+        // Henter ut antall rader
+        amountRows = cachedRowSet.getRow();
 
         // Setter inn mottatt radnummer
         currentRowNumber = rowID;
@@ -106,6 +128,12 @@ public class Contract {
         filteredRowSet.setTableName(TABLENAME);
         int [] keys = {1};
         cachedRowSet.setKeyColumns(keys);
+
+        // Hopper til nederste rad for å finne antall rader
+        cachedRowSet.last();
+
+        // Henter ut antall rader
+        amountRows = cachedRowSet.getRow();
 
         // Setter inn mottatt radnummer
         currentRowNumber = rowID;
@@ -143,7 +171,7 @@ public class Contract {
                 lastModified = filteredRowSet.getTimestamp("last_modified");
 
             } catch (SQLException se) {
-                System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+                infoText = "Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage();
             }
         }
         else {
@@ -170,21 +198,9 @@ public class Contract {
                 lastModified = cachedRowSet.getTimestamp("last_modified");
 
             } catch (SQLException se) {
-                System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
+                infoText = "Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage();
             }
         }
-
-        // Printer ut verdier
-        System.out.println("Kontrakt ID:" + contractID);
-        System.out.println("Leietaker:" + renter);
-        System.out.println("Megler:" + broker);
-        System.out.println("Gyldig:" + isValid);
-        System.out.println("Innbetalt depositum:" + hasPaidDepositum);
-        System.out.println("Signert av leietaker:" + isSignedByRenter);
-        System.out.println("Signert av megler:" + isSignedByBroker);
-        System.out.println("Startdato:" + inEffectDate);
-        System.out.println("Sluttdato:" + expirationDate);
-        System.out.println("\n /////// END OF CONTRACT //////// \n");
     }
 
     // Innlasting av kontrakt med et spesifisert radnummer
@@ -194,10 +210,10 @@ public class Contract {
         nextRowNumber += currentRowNumber + 1;
         String messageJumpToContract = "Forsøker å hente ut verdier til kontrakten på rad " + currentRowNumber + ".\n";
         try {
-            System.out.println(messageJumpToContract);
+            infoText = messageJumpToContract;
             refreshValues();
         } catch (SQLException e){
-            System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
         }
     }
 
@@ -215,14 +231,14 @@ public class Contract {
                 // Søker igjennom rowSet
                 while (filteredRowSet.next()) {
                     if (cID == filteredRowSet.getInt("contract_id")) {
-                        System.out.println(messageWhenFindContractWithID);
+                        infoText = messageWhenFindContractWithID;
                         jumpToContract(filteredRowSet.getRow());
                         return;
                     }
                 }
-                System.out.println(messageWhenCouldNotFindContractWithID);
+                infoText = messageWhenCouldNotFindContractWithID;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
 
@@ -234,69 +250,110 @@ public class Contract {
                 // Søker igjennom tabellen
                 while(cachedRowSet.next()) {
                     if(cID == cachedRowSet.getInt("contract_id")) {
-                        System.out.println(messageWhenFindContractWithID);
+                        infoText = messageWhenFindContractWithID;
                         jumpToContract(cachedRowSet.getRow());
                         return;
                     }
                 }
-                System.out.println(messageWhenCouldNotFindContractWithID);
-
+                infoText = messageWhenCouldNotFindContractWithID;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
 
-    // Innlasting av neste kontrakt
-    public void nextContract() throws SQLException {
-        currentRowNumber += 1;
-        previousRowNumber = currentRowNumber - 1;
-        nextRowNumber = currentRowNumber + 1;
-        String messageWhenNextContract = "Hopper til neste kontrakt. \n";
+    // Innlasting av neste person
+    public void nextPerson() throws SQLException {
+
+        String messageWhenNextContract = "Fant fram til neste kontrakt. \n";
+        String messageWhenLastContract = "Du har nådd bunnen av listen. \n";
 
         if (rowSetTypeIsFiltered) {
-            try {
-                System.out.println(messageWhenNextContract);
-                filteredRowSet.next();
-                refreshValues();
-            } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            // Sjekker om pekeren står på siste rad
+            if (filteredRowSet.getRow() == amountRows) {
+                infoText = messageWhenLastContract;
+            }
+            else {
+                currentRowNumber += 1;
+                previousRowNumber = currentRowNumber - 1;
+                nextRowNumber = currentRowNumber + 1;
+
+                // Hopper til neste rad
+                try {
+                    infoText = messageWhenNextContract;
+                    filteredRowSet.next();
+                    refreshValues();
+                } catch (SQLException e) {
+                    infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                }
             }
         }
         else {
-            try {
-                System.out.println(messageWhenNextContract);
-                cachedRowSet.next();
-                refreshValues();
-            } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            // Sjekker om pekeren står på siste rad
+            if (cachedRowSet.getRow() == amountRows) {
+                infoText = messageWhenLastContract;
+            }
+            else {
+                currentRowNumber += 1;
+                previousRowNumber = currentRowNumber - 1;
+                nextRowNumber = currentRowNumber + 1;
+
+                // Hopper til neste rad
+                try {
+                    infoText = messageWhenNextContract;
+                    cachedRowSet.next();
+                    refreshValues();
+                } catch (SQLException e) {
+                    infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                }
             }
         }
     }
 
     // Innlasting av forrige kontrakt
-    public void previousContract() throws SQLException {
-        currentRowNumber -= 1;
-        previousRowNumber = currentRowNumber - 1;
-        nextRowNumber = currentRowNumber + 1;
-        String messageWhenPreviousContract = "Hopper til forrige kontrakt. \n";
+    public void previousPerson() throws SQLException {
+
+        String messageWhenPreviousContract = "Fant fram til forrige kontrakt. \n";
+        String messageWhenFirstContract = "Du har nådd toppen av listen. \n";
 
         if (rowSetTypeIsFiltered) {
-            try {
-                System.out.println(messageWhenPreviousContract);
-                filteredRowSet.previous();
-                refreshValues();
-            } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            // Sjekker om pekeren står på øverste rad
+            if (filteredRowSet.getRow() == TOP_OF_ROWSET) {
+                infoText = messageWhenFirstContract;
+            }
+            else {
+                currentRowNumber -= 1;
+                previousRowNumber = currentRowNumber - 1;
+                nextRowNumber = currentRowNumber + 1;
+
+                // Hopper til neste rad
+                try {
+                    filteredRowSet.previous();
+                    infoText = messageWhenPreviousContract;
+                    refreshValues();
+                } catch (SQLException e) {
+                    infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                }
             }
         }
         else {
-            try {
-                System.out.println(messageWhenPreviousContract);
-                cachedRowSet.previous();
-                refreshValues();
-            } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            // Sjekker om pekeren står på øverste rad
+            if (cachedRowSet.getRow() == TOP_OF_ROWSET) {
+                infoText = messageWhenFirstContract;
+            }
+            else {
+                currentRowNumber -= 1;
+                previousRowNumber = currentRowNumber - 1;
+                nextRowNumber = currentRowNumber + 1;
+
+                // Hopper til neste rad
+                try {
+                    cachedRowSet.previous();
+                    infoText = messageWhenPreviousContract;
+                    refreshValues();
+                } catch (SQLException e) {
+                    infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                }
             }
         }
     }
@@ -309,18 +366,17 @@ public class Contract {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.moveToInsertRow();
-                System.out.println(messageWhenMoveToInsertRow);
+               infoText = messageWhenMoveToInsertRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.moveToInsertRow();
-                System.out.println(messageWhenMoveToInsertRow);
-                System.out.println("Move to insert row... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
+                infoText = messageWhenMoveToInsertRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -333,19 +389,17 @@ public class Contract {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.insertRow();
-                System.out.println(messageWhenInsertRow);
+                infoText = messageWhenInsertRow;
             } catch (SQLException e){
-
-                System.out.println("State: " + e.getSQLState() + "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.insertRow();
-                System.out.println(messageWhenInsertRow);
-                System.out.println("Insert row... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
+                infoText = messageWhenInsertRow;
             } catch (SQLException e){
-                System.out.println("State: " + e.getSQLState() + "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -358,17 +412,17 @@ public class Contract {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.moveToCurrentRow();
-                System.out.println(messageWhenMovedToRow);
+                infoText = messageWhenMovedToRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.moveToCurrentRow();
-                System.out.println(messageWhenMovedToRow);
+                infoText = messageWhenMovedToRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -381,17 +435,17 @@ public class Contract {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.cancelRowUpdates();
-                System.out.println(messageWhenCancelUpdates);
+                infoText = messageWhenCancelUpdates;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.cancelRowUpdates();
-                System.out.println(messageWhenCancelUpdates);
+                infoText = messageWhenCancelUpdates;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -405,20 +459,18 @@ public class Contract {
             try {
                 // Oppdaterer felt til FilteredRowset
                 filteredRowSet.updateNull(columnName);
-                System.out.println(messageWhenUpdateNull);
-
+                infoText = messageWhenUpdateNull;
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
         else {
             try {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateNull(columnName);
-                System.out.println(messageWhenUpdateNull);
-
+                infoText = messageWhenUpdateNull;
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
     }
@@ -426,26 +478,20 @@ public class Contract {
     // Oppdateringsmetode for Stringverdier
     public void updateStringValue(String columnName, String value) throws SQLException {
 
-        String messageWhenUpdateStringValue = "String-verdi oppdatert. \n";
-
         if (rowSetTypeIsFiltered) {
             try {
                 // Oppdaterer felt til FilteredRowset
                 filteredRowSet.updateString(columnName, value);
-                System.out.println(messageWhenUpdateStringValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
         else {
             try {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateString(columnName, value);
-                System.out.println(messageWhenUpdateStringValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
     }
@@ -453,28 +499,20 @@ public class Contract {
     // Oppdateringsmetode for Intverdier
     public void updateIntValue(String columnName, int value) throws SQLException {
 
-        String messageWhenUpdateIntValue = "Int-verdi oppdatert. \n";
-
         if (rowSetTypeIsFiltered) {
             try {
                 // Oppdaterer felt til FilteredRowSet
                 filteredRowSet.updateInt(columnName, value);
-                System.out.println(messageWhenUpdateIntValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
         else {
             try {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateInt(columnName, value);
-                System.out.println(messageWhenUpdateIntValue);
-                System.out.println("Update int value... \t CurrentNowNumber: " + currentRowNumber + "\t Rowset.Rownumber: " + cachedRowSet.getRow());
-
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
     }
@@ -482,26 +520,20 @@ public class Contract {
     // Oppdateringsmetode for Booleanverdier
     public void updateBooleanValue(String columnName, boolean value) throws SQLException {
 
-        String messageWhenUpdateBooleanValue = "Boolean-verdi oppdatert. \n";
-
         if (rowSetTypeIsFiltered) {
             try {
                 // Oppdaterer felt til FilteredRowSet
                 cachedRowSet.updateBoolean(columnName, value);
-                System.out.println(messageWhenUpdateBooleanValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
         else {
             try {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateBoolean(columnName, value);
-                System.out.println(messageWhenUpdateBooleanValue);
-
             } catch (SQLException s) {
-                System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
         }
     }
@@ -514,17 +546,17 @@ public class Contract {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.updateRow();
-                System.out.println(messageWhenUpdateRow);
+                infoText = messageWhenUpdateRow;
             } catch (SQLException e){
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.updateRow();
-                System.out.println(messageWhenUpdateRow);
+                infoText = messageWhenUpdateRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -537,17 +569,17 @@ public class Contract {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.deleteRow();
-                System.out.println(messageWhenDeleteRow);
+                infoText = messageWhenDeleteRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
         else {
             try {
                 cachedRowSet.deleteRow();
-                System.out.println(messageWhenDeleteRow);
+                infoText = messageWhenDeleteRow;
             } catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }
@@ -560,16 +592,16 @@ public class Contract {
 
         if (rowSetTypeIsFiltered) {
             if (dbInterface.commitToDatabase(filteredRowSet)) {
-                System.out.println(messageWhenAcceptChanges);
+                infoText = messageWhenAcceptChanges;
             } else {
-                System.out.println(errorMessageWhenAcceptChanges);
+                infoText = errorMessageWhenAcceptChanges;
             }
         }
         else {
             if (dbInterface.commitToDatabase(cachedRowSet)) {
-                System.out.println(messageWhenAcceptChanges);
+                infoText = messageWhenAcceptChanges;
             } else {
-                System.out.println(errorMessageWhenAcceptChanges);
+                infoText = errorMessageWhenAcceptChanges;
             }
         }
     }
@@ -597,32 +629,32 @@ public class Contract {
         Date now = new Date();
 
         if (!brokerIsBroker) {
-            System.out.println("FEIL: Angitt megler i kontrakten er ingen megler. \n");
+            infoText = "FEIL: Angitt megler i kontrakten er ingen megler. \n";
             return false;
         }
 
         else if (renterPersonNo.equals(propertyOwner)) {
-            System.out.println("Feil: Leietakeren kan ikke leie sin egen bolig. \n");
+            infoText = "Feil: Leietakeren kan ikke leie sin egen bolig. \n";
             return false;
         }
 
         else if (renterPersonNo.equals(brokerPersonNo)) {
-            System.out.println("FEIL: Leietakeren kan ikke være samme person som megleren. \n");
+            infoText = "FEIL: Leietakeren kan ikke være samme person som megleren. \n";
             return false;
         }
 
         else if (!isSignedByRenter) {
-            System.out.println("FEIL: Kontrakten er ikke signert av leietaker. \n");
+            infoText = "FEIL: Kontrakten er ikke signert av leietaker. \n";
             return false;
         }
 
         else if (!isSignedByBroker) {
-            System.out.println("FEIL: Kontrakten er ikke signert av megler. \n");
+            infoText = "FEIL: Kontrakten er ikke signert av megler. \n";
             return false;
         }
 
         else if(!now.after(inEffectDate) || !now.before(expirationDate)) {
-            System.out.println("FEIL: Dagens dato er ikke innenfor kontraktperioden. \n");
+            infoText = "FEIL: Dagens dato er ikke innenfor kontraktperioden. \n";
             return false;
         }
 
@@ -634,7 +666,7 @@ public class Contract {
     // Oppdaterer kontraktfeltet "valid" i databasen til korrekt status.
     public void setContractValidation() throws SQLException {
         if (checkValidation() && isValid) {
-            System.out.println("Kontrakten er allerede gyldig. Metoden foretar seg ingen endringer.");
+            infoText = "Kontrakten er allerede gyldig. Metoden foretar seg ingen endringer.";
             return;
         }
         else if (checkValidation()) {
@@ -643,12 +675,11 @@ public class Contract {
                     // Oppdaterer felt
                     filteredRowSet.moveToCurrentRow();
                     filteredRowSet.updateBoolean("valid", true);
-                    System.out.println("Boolean-verdi oppdatert. \n");
                     filteredRowSet.updateRow();
-                    System.out.println("Oppdatering av raden ble lagret i cache. \n");
+                    infoText = "Gyldighetsstatus til kontrakten ble endret. \n";
                 }
                 catch (SQLException s) {
-                    System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                    infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
                 }
             }
             else {
@@ -656,23 +687,22 @@ public class Contract {
                     // Oppdaterer felt
                     cachedRowSet.moveToCurrentRow();
                     cachedRowSet.updateBoolean("valid", true);
-                    System.out.println("Boolean-verdi oppdatert. \n");
                     cachedRowSet.updateRow();
-                    System.out.println("Oppdatering av raden ble lagret i cache. \n");
+                    infoText = "Gyldighetsstatus til kontrakten ble endret. \n";
                 } catch (SQLException s) {
-                    System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                    infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
                 }
             }
 
             // Sender oppdatering til databasen
             acceptChanges();
-            System.out.println("Kontrakten er nå oppdatert til status: Gyldig.");
+            infoText = "Kontrakten er nå oppdatert til status: Gyldig.";
 
             return;
         }
 
         else if (!checkValidation() && !this.isValid) {
-            System.out.println("Kontrakten er allerede ugyldig. Metoden foretar seg ingen endringer.");
+            infoText = "Kontrakten er allerede ugyldig. Metoden foretar seg ingen endringer.";
             return;
         }
 
@@ -683,12 +713,10 @@ public class Contract {
                     // Oppdaterer felt
                     filteredRowSet.moveToCurrentRow();
                     filteredRowSet.updateBoolean("valid", false);
-                    System.out.println("Boolean-verdi oppdatert. \n");
                     filteredRowSet.updateRow();
-                    System.out.println("Oppdatering av raden ble lagret i cache. \n");
-                }
-                catch (SQLException s) {
-                    System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                    infoText = "Oppdatering av raden ble lagret i cache. \n";
+                } catch (SQLException s) {
+                    infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
                 }
             }
             else {
@@ -696,17 +724,16 @@ public class Contract {
                     // Oppdaterer felt
                     cachedRowSet.moveToCurrentRow();
                     cachedRowSet.updateBoolean("valid", false);
-                    System.out.println("Boolean-verdi oppdatert. \n");
                     cachedRowSet.updateRow();
-                    System.out.println("Oppdatering av raden ble lagret i cache. \n");
+                    infoText = "Oppdatering av raden ble lagret i cache. \n";
                 } catch (SQLException s) {
-                    System.out.println("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                    infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
                 }
             }
 
             // Sender oppdatering til databasen
             acceptChanges();
-            System.out.println("Kontrakten er nå oppdatert til status: Ugyldig.");
+            infoText = "Kontrakten er nå oppdatert til status: Ugyldig.";
         }
     }
 
@@ -718,7 +745,7 @@ public class Contract {
         du.findDwellingUnitWithID(dwellingUnitID);
 
         if (checkValidation() && !du.getIsAvailable()) {
-            System.out.println("Boligen har allerede status OPPTATT.");
+            infoText = "Boligen har allerede status OPPTATT.";
             return;
         }
 
@@ -727,15 +754,15 @@ public class Contract {
                 du.moveToCurrentRow();
                 du.updateBooleanValue("available", false);
                 du.acceptChanges();
-                System.out.println("Endret status på boligen tilknyttet kontrakten til: OPPTATT");
+                infoText = "Endret status på boligen tilknyttet kontrakten til: OPPTATT";
             }
             catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
             return;
         }
         else if (!checkValidation() && du.getIsAvailable()) {
-            System.out.println("Boligen har allerede status LEDIG.");
+            infoText = "Boligen har allerede status LEDIG.";
             return;
         }
         else {
@@ -743,10 +770,10 @@ public class Contract {
                 du.moveToCurrentRow();
                 du.updateBooleanValue("available", true);
                 du.acceptChanges();
-                System.out.println("Endret status på boligen tilknyttet kontrakten til: LEDIG");
+                infoText = "Endret status på boligen tilknyttet kontrakten til: LEDIG";
             }
             catch (SQLException e) {
-                System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
         }
     }

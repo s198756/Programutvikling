@@ -46,9 +46,6 @@ public class Person {
     // Initialiserer CachedRowSet
     private CachedRowSetImpl cachedRowSet;
 
-    // Initialiserer String som viser programmeldinger til vinduene.
-    private String infoText;
-
     // Initialiserer sjekk om klassens RowSet er av typen "Cached" eller "Filtered"
     private boolean rowSetTypeIsFiltered;
 
@@ -56,6 +53,15 @@ public class Person {
     private int currentRowNumber = 1;
     private int nextRowNumber;
     private int previousRowNumber;
+
+    // Angir rowsettets antall rader
+    private int amountRows;
+
+    // Angir toppen av rowset
+    private static final int TOP_OF_ROWSET = 1;
+
+    // Initialiserer String som viser programmeldinger til vinduene.
+    private String infoText;
 
     // Konstruktør som oppretter et nytt CachedRowSet som inneholder ALLE registrerte personer fra databasen
     public Person () {
@@ -77,6 +83,14 @@ public class Person {
             cachedRowSet.setTableName(TABLENAME);
             int [] keys = {1, 9, 10};
             cachedRowSet.setKeyColumns(keys);
+
+            // Hopper til nederste rad for å finne antall rader
+            cachedRowSet.last();
+
+            // Henter ut antall rader
+            amountRows = cachedRowSet.getRow();
+
+            // Hopper til øverste rad
             cachedRowSet.first();
 
             // Nåværende rowSet er av typen "Cached"
@@ -93,6 +107,12 @@ public class Person {
 
         cachedRowSet = crs;
         cachedRowSet.setTableName(TABLENAME);
+
+        // Hopper til nederste rad for å finne antall rader
+        cachedRowSet.last();
+
+        // Henter ut antall rader
+        amountRows = cachedRowSet.getRow();
 
         // Setter inn mottatt radnummer
         currentRowNumber = rowID;
@@ -112,6 +132,12 @@ public class Person {
         // Setter inn FilteredRowSet og tabellnavn
         filteredRowSet = frs;
         filteredRowSet.setTableName(TABLENAME);
+
+        // Hopper til nederste rad for å finne antall rader
+        cachedRowSet.last();
+
+        // Henter ut antall rader
+        amountRows = cachedRowSet.getRow();
 
         // Setter inn mottatt radnummer
         currentRowNumber = rowID;
@@ -208,33 +234,6 @@ public class Person {
         township = location.getTownship();
         county = location.getCounty();
         category = location.getCategory();
-
-        // Printer ut verdier
-        /*
-        System.out.println("Personnummer: " + personNo);
-        System.out.println("Megler: " + isBroker);
-        System.out.println("Fornavn: " + firstname);
-        System.out.println("Mellomnavn: " + middlename);
-        System.out.println("Etternavn: " + surname);
-        System.out.println("Gate: " + street);
-        System.out.println("Nummer: " + streetNo);
-        System.out.println("Postnummer: " + zipCode);
-        System.out.println("Poststed: " + area);
-        System.out.println("Kommune: " + township);
-        System.out.println("Fylke: " + county);
-        System.out.println("Kategori: " + category);
-        System.out.println("Telefon: " + telephoneNo);
-        System.out.println("Epost: " + email);
-        System.out.println("Årsinntekt: " + annualRevenue);
-        System.out.println("Bestått kreditsjekk: " + hasPassedCreditCheck);
-        System.out.println("Husdyr: " + hasHousepets);
-        System.out.println("Røyker: " + isSmoker);
-        System.out.println("Sivilstatus: " + maritalStatus);
-        System.out.println("Handicaptilpasning: " + needsHandicapAccommodation);
-        System.out.println("Opprettet: " + createdDate);
-        System.out.println("Sist endret: " + lastModifiedDate);
-        System.out.println("\n /////// END OF PERSON //////// \n");
-        */
     }
 
     // Innlasting av person med et spesifisert radnummer
@@ -242,7 +241,7 @@ public class Person {
         currentRowNumber = rowNo;
         previousRowNumber -= currentRowNumber - 1;
         nextRowNumber += currentRowNumber + 1;
-        String messageJumpToPerson = "Forsøker å hente ut verdier til personen på rad " + currentRowNumber + ".\n";
+        String messageJumpToPerson = "Hentet ut informasjon om personen";
         try {
             infoText = messageJumpToPerson;
             refreshValues();
@@ -385,61 +384,103 @@ public class Person {
         }
     }
 
-    // Innlasting av neste person
+    // Innlasting av neste person. Kontrollerer også om pekeren står på nederste rad.
     public void nextPerson() throws SQLException {
-        currentRowNumber += 1;
-        previousRowNumber = currentRowNumber - 1;
-        nextRowNumber = currentRowNumber + 1;
+
         String messageWhenNextPerson = "Fant fram til neste person. \n";
+        String messageWhenLastPerson = "Du har nådd bunnen av listen. \n";
 
         if (rowSetTypeIsFiltered) {
-            try {
-                infoText = messageWhenNextPerson;
-                filteredRowSet.next();
-                refreshValues();
-            } catch (SQLException e) {
-                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+            // Sjekker om pekeren står på siste rad
+            if (filteredRowSet.getRow() == amountRows) {
+                infoText = messageWhenLastPerson;
+            }
+            else {
+                currentRowNumber += 1;
+                previousRowNumber = currentRowNumber - 1;
+                nextRowNumber = currentRowNumber + 1;
+
+                // Hopper til neste rad
+                try {
+                    filteredRowSet.next();
+                    infoText = messageWhenNextPerson;
+                    refreshValues();
+                } catch (SQLException e) {
+                    infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                }
             }
         }
         else {
-            try {
-                infoText = messageWhenNextPerson;
-                cachedRowSet.next();
-                refreshValues();
-            } catch (SQLException e) {
-                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+            // Sjekker om pekeren står på siste rad
+            if (cachedRowSet.getRow() == amountRows) {
+                infoText = messageWhenLastPerson;
+            }
+            else {
+                currentRowNumber += 1;
+                previousRowNumber = currentRowNumber - 1;
+                nextRowNumber = currentRowNumber + 1;
+
+                // Hopper til neste rad
+                try {
+                    cachedRowSet.next();
+                    infoText = messageWhenNextPerson;
+                    refreshValues();
+                } catch (SQLException e) {
+                    infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                }
             }
         }
     }
 
-    // Innlasting av forrige person
+    // Innlasting av forrige person. Kontrollerer også om pekeren står på øverste rad.
     public void previousPerson() throws SQLException {
-        currentRowNumber -= 1;
-        previousRowNumber = currentRowNumber - 1;
-        nextRowNumber = currentRowNumber + 1;
+
         String messageWhenPreviousPerson = "Fant fram til forrige person. \n";
+        String messageWhenFirstPerson = "Du har nådd toppen av listen. \n";
 
         if (rowSetTypeIsFiltered) {
-            try {
-                infoText = messageWhenPreviousPerson;
-                filteredRowSet.previous();
-                refreshValues();
-            } catch (SQLException e){
-                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+            // Sjekker om pekeren står på øverste rad
+            if (filteredRowSet.getRow() == TOP_OF_ROWSET) {
+                infoText = messageWhenFirstPerson;
+            }
+            else {
+                currentRowNumber -= 1;
+                previousRowNumber = currentRowNumber - 1;
+                nextRowNumber = currentRowNumber + 1;
+
+                // Hopper til neste rad
+                try {
+                    filteredRowSet.previous();
+                    infoText = messageWhenPreviousPerson;
+                    refreshValues();
+                } catch (SQLException e) {
+                    infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                }
             }
         }
         else {
-            try {
-                infoText = messageWhenPreviousPerson;
-                cachedRowSet.previous();
-                refreshValues();
-            } catch (SQLException e){
-                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+            // Sjekker om pekeren står på øverste rad
+            if (cachedRowSet.getRow() == TOP_OF_ROWSET) {
+                infoText = messageWhenFirstPerson;
+            }
+            else {
+                currentRowNumber -= 1;
+                previousRowNumber = currentRowNumber - 1;
+                nextRowNumber = currentRowNumber + 1;
+
+                // Hopper til neste rad
+                try {
+                    cachedRowSet.previous();
+                    infoText = messageWhenPreviousPerson;
+                    refreshValues();
+                } catch (SQLException e) {
+                    infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                }
             }
         }
     }
 
-    // Flytter pekeren til en innsettingsrad. Må kalles opp ved opprettelse av ny person.
+    // Flytter pekeren til en innsettingsrad. Må brukes ved opprettelse av ny person.
     public void moveToInsertRow() throws SQLException {
 
         String messageWhenMoveToInsertRow = "Fyll ut de påkrevde feltene og trykk 'Lagre' for å opprette en ny person. \n";
@@ -509,7 +550,7 @@ public class Person {
         }
     }
 
-    // Kansellerer alle oppdateringer
+    // Kansellerer alle oppdateringer som er lagret i Rowsetet.
     public void cancelUpdates() throws SQLException {
 
         String messageWhenCancelUpdates = "Alle endringer ble avbrutt. \n";
@@ -594,6 +635,27 @@ public class Person {
         }
     }
 
+    // Oppdateringsmetode for Longverdier
+    public void updateLongValue(String columnName, long value) throws SQLException {
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Oppdaterer felt til FilteredRowSet
+                cachedRowSet.updateLong(columnName, value);
+            } catch (SQLException s) {
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
+            }
+        }
+        else {
+            try {
+                // Oppdaterer felt til CachedRowSet
+                cachedRowSet.updateLong(columnName, value);
+            } catch (SQLException s) {
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
+            }
+        }
+    }
+
     // Oppdateringsmetode for Booleanverdier
     public void updateBooleanValue(String columnName, boolean value) throws SQLException {
 
@@ -646,6 +708,7 @@ public class Person {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.deleteRow();
+                amountRows -= 1;
                 infoText = messageWhenDeleteRow;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
@@ -654,6 +717,7 @@ public class Person {
         else {
             try {
                 cachedRowSet.deleteRow();
+                amountRows -= 1;
                 infoText = messageWhenDeleteRow;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();

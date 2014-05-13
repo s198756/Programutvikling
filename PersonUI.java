@@ -42,7 +42,6 @@ public class PersonUI {
     JLabel smokerLabel;
     JLabel housepetsLabel;
     JLabel handicapAccommLabel;
-    JLabel emptyLabel;
     JLabel infoTextLabel;
     JTextField personNoField;
     JTextField firstNameField;
@@ -67,7 +66,7 @@ public class PersonUI {
     boolean insertMode;
 
     public static void main(String[] args) throws SQLException {
-        new PersonUI();
+        PersonUI personPanel = new PersonUI();
     }
 
     // Konstruktør som oppretter ny personliste over alle personer. Viser personen øverst på lista.
@@ -80,6 +79,7 @@ public class PersonUI {
             person.refreshValues();
         } catch (SQLException e) {
         }
+
 
         EventQueue.invokeLater(new Runnable() {
             @Override
@@ -273,7 +273,6 @@ public class PersonUI {
     private class HeaderPanel extends JPanel {
         public HeaderPanel() {
             // Headerpanel som viser fullt navn
-
             setPreferredSize(new Dimension(1250, 50));
 
             // Innhold i HeaderPanel:
@@ -503,16 +502,34 @@ public class PersonUI {
     private class DwellingUnitScrollPanel extends JScrollPane {
         public DwellingUnitScrollPanel() {
             // Ramme
+
             setBorder(BorderFactory.createTitledBorder("Utleide boliger"));
             setPreferredSize(new Dimension(300, 200));
 
-
+            /*
             // Innhold i DwellingUnitsPanel
-            dwellingUnitsTable = new JTable();
+            Boligtabell boligtabell = new Boligtabell();
+
+            DefaultTableModel d = boligtabell.visEierensBoliger(person.getPersonNo());
+
+            Final JTable table = new JTable(d) {
+
+                for (int row = 0; row < getRowCount(); row++) {
+                    Object o = getValueAt(row, columnCount);
+                    if (o != null){
+                        return o.getClass();
+                    }
+                    return Object.class;
+                }
+
+            };
+
+            table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            */
+
 
             // Viewport
             setViewportView(dwellingUnitsTable);
-
             setVisible(true);
         }
     }
@@ -561,7 +578,6 @@ public class PersonUI {
         }
 
         public void actionPerformed(ActionEvent e) {
-
             if (e.getSource() == nextButton) {
                 try {
                     if (insertMode) {
@@ -581,7 +597,13 @@ public class PersonUI {
                 } catch (SQLException sql) {
                 }
             } else if (e.getSource() == searchButton) {
-                JOptionPane.showInputDialog("Søk på personnummer");
+                try {
+                    String identity = JOptionPane.showInputDialog("Søk på personnummer");
+                    person.findPersonWithPersonNo(identity);
+                    updateFields();
+                } catch (SQLException s) {
+
+                }
             } else if (e.getSource() == cancelButton) {
                 try {
                     if (insertMode) {
@@ -610,11 +632,11 @@ public class PersonUI {
             } else if (e.getSource() == saveButton) {
                 try {
                     if (insertMode) {
-                        person.insertRow();
-                        person.moveToCurrentRow();
+                        saveNewPerson();
                     }
-                    person.acceptChanges();
-                    updateFields();
+                    else {
+                        updatePerson();
+                    }
                 } catch (SQLException sql) {
                   }
             } else {
@@ -693,5 +715,103 @@ public class PersonUI {
         housepetsCheckBox.setSelected(false);
         handicapAccommCheckBox.setSelected(false);
         maritalStatusComboBox.setSelectedItem("alene");
+    }
+
+    private void saveNewPerson() throws SQLException {
+        try {
+            // Henter fram personnummeret for å hente fram vedkommende etterpå
+            String currentPersonNo = personNoField.getText();
+
+            // Oppdaterer feltene
+            person.updateStringValue("person_no", personNoField.getText());
+            person.updateStringValue("firstname", firstNameField.getText());
+            person.updateStringValue("middlename", middleNameField.getText());
+            person.updateStringValue("surname", surNameField.getText());
+            person.updateBooleanValue("is_broker", brokerCheckBox.isSelected());
+            // Caster combobox til String
+            String maritalStatus = maritalStatusComboBox.getSelectedItem().toString();
+            person.updateStringValue("marital_status", maritalStatus);
+            person.updateStringValue("street", streetField.getText());
+            person.updateStringValue("street_no", streetNoField.getText());
+            person.updateStringValue("zip_code", zipCodeField.getText());
+            person.updateLongValue("telephone", Long.parseLong(telephoneField.getText()));
+            person.updateStringValue("email", emailField.getText());
+            person.updateIntValue("annual_revenue", Integer.parseInt(annualRevenueField.getText()));
+            person.updateBooleanValue("passed_credit_check", passedCreditCheckBox.isSelected());
+            person.updateBooleanValue("smoker", smokerCheckBox.isSelected());
+            person.updateBooleanValue("housepets", housepetsCheckBox.isSelected());
+            person.updateBooleanValue("handicap_accomm", handicapAccommCheckBox.isSelected());
+
+            // Inserter raden
+            person.insertRow();
+
+            // Oppdaterer infotekst for å vise eventuelle statusmeldinger
+            updateInfotext();
+
+            // Flytter peker vekk fra innsettingsrad
+            person.moveToCurrentRow();
+
+            // Sender endringer til databasen
+            person.acceptChanges();
+
+            // Oppdaterer infotekst for å vise eventuelle statusmeldinger
+            updateInfotext();
+
+            // Henter fram personen som ble opprettet
+            person.findPersonWithPersonNo(currentPersonNo);
+
+            // Oppdaterer infotekst for å vise eventuelle statusmeldinger
+            updateFields();
+        }
+        catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+
+    private void updatePerson() throws SQLException {
+        try {
+            // Flytter til nåværende rad. En forsikring i tilfelle pekeren står på en innsettingsrad.
+            person.moveToCurrentRow();
+
+            // Oppdaterer feltene
+            person.updateStringValue("person_no", personNoField.getText());
+            person.updateStringValue("firstname", firstNameField.getText());
+            person.updateStringValue("middlename", middleNameField.getText());
+            person.updateStringValue("surname", surNameField.getText());
+            person.updateBooleanValue("is_broker", brokerCheckBox.isSelected());
+            // Caster combobox til String
+            String maritalStatus = maritalStatusComboBox.getSelectedItem().toString();
+            person.updateStringValue("marital_status", maritalStatus);
+            person.updateStringValue("street", streetField.getText());
+            person.updateStringValue("street_no", streetNoField.getText());
+            person.updateStringValue("zip_code", zipCodeField.getText());
+            person.updateLongValue("telephone", Long.parseLong(telephoneField.getText()));
+            person.updateStringValue("email", emailField.getText());
+            person.updateIntValue("annual_revenue", Integer.parseInt(annualRevenueField.getText()));
+            person.updateBooleanValue("passed_credit_check", passedCreditCheckBox.isSelected());
+            person.updateBooleanValue("smoker", smokerCheckBox.isSelected());
+            person.updateBooleanValue("housepets", housepetsCheckBox.isSelected());
+            person.updateBooleanValue("handicap_accomm", handicapAccommCheckBox.isSelected());
+
+            // Oppdaterer raden
+            person.updateRow();
+
+            // Oppdaterer infotekst for å vise eventuelle statusmeldinger
+            updateInfotext();
+
+            // Sender endringer til databasen
+            person.acceptChanges();
+
+            // Oppdaterer infotekst for å vise eventuelle statusmeldinger
+            updateInfotext();
+
+            // Henter fram de nye verdiene til personen
+            person.refreshValues();
+            updateFields();
+        }
+        catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
     }
 }
