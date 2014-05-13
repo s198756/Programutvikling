@@ -4,62 +4,70 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
 import javax.swing.event.*;
+import java.net.URL;
+import java.sql.SQLException;
 
 
 /**
- * Created by ThomN on 05.05.2014.
+ * Created by Thomas Newman, s198753 on 05.05.2014.
  */
 
-public class Tabs
+public class Tabs extends JFrame
 {
     JFrame frame = new JFrame();
     JTabbedPane tabbedPane = new JTabbedPane();
-    LeieTakerPanel lp = new LeieTakerPanel();
-    BoligPanel bp = new BoligPanel();
+    PersonUITest pUI = new PersonUITest();
+    //BoligVindu bv = new BoligVindu();
     KontraktPanel kp = new KontraktPanel();
+
 
     public Tabs()
     {
-        tabbedPane.add("Leietaker", lp);
-        tabbedPane.add("Bolig", bp);
+        Toolkit verktøykasse = Toolkit.getDefaultToolkit();
+        Dimension skjermdimensjon = verktøykasse.getScreenSize();
+        int bredde = skjermdimensjon.width;
+        int høyde = skjermdimensjon.height;
+
+        //Setter bredde og høyde. Lar plattformen velge plassering.
+        frame.setSize(bredde / 4, høyde / 4);
+        frame.setLocationByPlatform(true);
+
+        // Konstruktør som skal legge inn program Icon
+        String bildefil = "Files/Bilder/PrIcon.svg";
+        URL kilde = Tabs.class.getResource(bildefil);
+        if (kilde != null) {
+            ImageIcon bilde = new ImageIcon(kilde);
+            Image ikon = bilde.getImage();
+            frame.setIconImage(ikon);
+        }
+
+
+
+
+
+
+
+
+
+
+        //tabbedPane.add("Person", pUI);
+        //tabbedPane.add("Bolig", bv);
         tabbedPane.add("Kontrakt", kp);
         frame.getContentPane().add(tabbedPane);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setShape(1200, 720);
+        frame.setSize(1280, 720);
+        frame.pack();
         frame.setLocationByPlatform(true);
         frame.setVisible(true);
+
+
     }
 
-    public static void main(String[] args)
-    {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new Tabs();
-            }
-        });
-    }
+
+
+
+
 }
 
 
-/*public class Tabs extends JPanel
-{
-    public Tabs()
-    {
-        super(new GridLayout(1, 1));
-        ImageIcon icon = new ImageIcon(getClass().getResource("bilder/middle.gif"));
-        JTabbedPane tab = new JTabbedPane();
-
-        JComponent tab1 = getLeietaker();
-        tab.addTab("Leietaker", icon, tab1, "Leietaker vindu");
-
-        JComponent tab2 = getBolig();
-        tab.addTab("Bolig", icon, tab2, "Bolig vindu");
-
-        JComponent tab3 = getKontrakt();
-        tab.addTab("Kontrakt", icon, tab3, "Kontrakt vindu");
-
-        tab.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-
-        add(tab);*/
 
