@@ -22,7 +22,7 @@ public class Boligtabell {
     public DefaultTableModel visAltIBoligtabellen() {
         //Denne metoden returnerer en DefaultTableModel som blir sendt til boligvinduet og oppretter et JTable når man trykker på 'Vis alle boliger'
 
-        String query = "SELECT * FROM dwelling_unit";       //SQL-query
+        String query = "SELECT dwelling_unit_id, available, property_owner, dwelling_type, size, street, street_no, zip_code, monthly_price, depositum, incl_warmup, incl_warmwater, incl_internet, incl_tv, incl_electricity, incl_furniture, incl_elec_appliance, allow_housepets, allow_smokers, property_size, amount_bedroom, amount_bathroom, amount_terrace, amount_balcony, amount_private_parking, elevator, handicap_accomm, created, last_modified FROM dwelling_unit";       //SQL-query
 
         Vector columnnames = new Vector();                  //Vector for kolonnene
         Vector rows = new Vector();                         //Vector for radene
@@ -111,7 +111,49 @@ public class Boligtabell {
             return adress;                                                          //sender ut
     }
 
-  /*  public void settInnNyBoligIBoliglisten(String owner, String type, int size, String street, int streetnr, int zip, int monthly, int deposit){
+    public DefaultTableModel visEierensBoliger(String pNo){
+        PreparedStatement ps = null;
+        String query = "SELECT dwelling_unit_id, available, street, street_no, zip_code FROM dwelling_unit WHERE property_owner LIKE ?";
+        Vector rows = new Vector();
+        Vector columnnames = new Vector();
+
+        try{
+            Class.forName(DRIVER);
+            con = DriverManager.getConnection(URL, USER, PASSWORD);
+            ps = con.prepareStatement(query);
+            ps.setString(1, pNo);
+
+            rs = ps.executeQuery();                                                 //utfører databasesøk
+            ResultSetMetaData metadata = rs.getMetaData();                          //metadata blir sendt videre
+            int numberofcolumns = metadata.getColumnCount();                        //får kolonnetelling
+
+            for (int column = 0; column < numberofcolumns; column++) {
+                columnnames.addElement(metadata.getColumnLabel(column + 1));        //gjennomløper og fyller inn kolonner
+            }
+
+            while (rs.next()) {
+                Vector newrows = new Vector();                                      //gjennomløper og fyller inn rader
+                for (int i = 1; i <= numberofcolumns; i++) {
+                    newrows.addElement(rs.getObject(i));
+                }
+                rows.addElement(newrows);                                           //legger inn i opprinnelig vector
+            }
+            rs.close();
+            ps.close();                                                             //lukker alle åpne database-forbindelser
+            con.close();
+
+        }catch(SQLException sqle){
+            sqle.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Feil i SQL!");
+        }catch(ClassNotFoundException cnfe){
+            cnfe.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Feil i SQL!");
+        }
+        DefaultTableModel owner = new DefaultTableModel(rows, columnnames);
+        return owner;
+    }
+
+   /* public void settInnNyBoligIBoliglisten(String owner, String type, int size, String street, String streetnr, int zip, int monthly, int deposit){
         //Denne metoden setter inn en ny bolig i boliglisten
 
         String query = "SELECT * FROM dwelling_unit";       //SQL-query
@@ -127,7 +169,7 @@ public class Boligtabell {
             rs.updateString("dwelling_type", type);                                                     //resten av verdiene får automatiske verdier ved opprettelse
             rs.updateInt("size", size);
             rs.updateString("street", street);
-            rs.updateInt("street_no", streetnr);
+            rs.updateString("street_no", streetnr);
             rs.updateInt("zip_code", zip);
             rs.updateInt("monthly_price", monthly);
             rs.updateInt("depositum", deposit);
