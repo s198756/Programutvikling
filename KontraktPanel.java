@@ -40,9 +40,9 @@ public class KontraktPanel extends JPanel implements ActionListener
     public KontraktPanel()
     {
         setLayout(new BorderLayout( 5, 5 ));
-        add(new JScrollPane(kontraktutskrift), BorderLayout.SOUTH);
-        add(new JScrollPane(bolig), BorderLayout.SOUTH);
-        add(new JScrollPane(leietaker), BorderLayout.SOUTH);
+        add(new JScrollPane(kontraktutskrift), BorderLayout.EAST);
+        add(new JScrollPane(bolig), BorderLayout.CENTER);
+        add(new JScrollPane(leietaker), BorderLayout.CENTER);
         t = new KontraktTabell();
         opprett = new JButton("Opprett Kontrakt");
         visAlleK = new JButton("Vis alle kontrakter");
@@ -51,9 +51,9 @@ public class KontraktPanel extends JPanel implements ActionListener
         start = new JTextField(5);
         stop = new JTextField(5);
         maanedsleie = new JTextField(5);
-        leietaker = new JTextArea(320, 40);
-        bolig = new JTextArea(320, 40);
-        kontraktutskrift = new JTextArea(320, 40);
+        leietaker = new JTextArea(320, 50);
+        bolig = new JTextArea(320, 50);
+        kontraktutskrift = new JTextArea(320, 100);
 
 
         visAlleK.addActionListener(this);
@@ -65,6 +65,7 @@ public class KontraktPanel extends JPanel implements ActionListener
 
         headline = new JPanel();
         nyLeieForhold = new JPanel(new GridLayout(0,1));
+        nyLeieForhold.setPreferredSize(new Dimension(500,300));
         info = new JPanel(new GridLayout(0,1));
         tabell = new JPanel();
         tabell.setLayout(new BorderLayout());
@@ -193,8 +194,12 @@ public class KontraktPanel extends JPanel implements ActionListener
 
             contract = new Contract();
             contract.findContractWithID(kid);
+            dwelling = new DwellingUnit();
+            dwelling.findDwellingUnitWithID(kid);
+            //person = new Person();
 
-            String info = "Kontrakt-ID: " + contract.getContractID() + "\nLeietaker: " + contract.getRenter() +
+
+            String info = "Kontrakt-ID: " + contract.getContractID() + "\nBolig-ID" + dwelling.getDwellingUnitID() +"\nLeietaker: " + contract.getRenter() +
                     "\nMegler: " + contract.getBroker() + "\nValider? " + contract.getIsValid() +
                     "\nBetalt Depositum: " + contract.getHasPaidDepositum() + "\nSignert av Leietaker: " +
                     contract.getIsSignedByRenter()+ "\nSignert av Megler: " + contract.getIsSignedByBroker() +
