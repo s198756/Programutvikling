@@ -609,17 +609,17 @@ public class Contract {
     // Returnerer "true" dersom kravene til å oppnå en gyldig kontrakt oppfylles.
     public boolean checkValidation() throws SQLException {
 
-        Person verifyPersons = new Person();
+        Person verifyPerson = new Person();
         DwellingUnit verifyDwellingUnit = new DwellingUnit();
 
         // Henter ut nødvendig informasjon om kontraktens megler
-        verifyPersons.findPersonWithPersonNo(broker);
-        boolean brokerIsBroker = verifyPersons.getIsBroker();
-        String brokerPersonNo = verifyPersons.getPersonNo();
+        verifyPerson.findPersonWithPersonNo(broker);
+        boolean brokerIsBroker = verifyPerson.getIsBroker();
+        String brokerPersonNo = verifyPerson.getPersonNo();
 
         // Henter ut nødvendig informasjon om kontraktens leietaker
-        verifyPersons.findPersonWithPersonNo(renter);
-        String renterPersonNo = verifyPersons.getPersonNo();
+        verifyPerson.findPersonWithPersonNo(renter);
+        String renterPersonNo = verifyPerson.getPersonNo();
 
         // Henter ut nødvendig informasjon om kontraktens bolig
         verifyDwellingUnit.findDwellingUnitWithID(dwellingUnitID);
@@ -778,12 +778,20 @@ public class Contract {
         }
     }
 
+    public String getInfoText() {
+        return infoText;
+    }
+
     public int getCurrentRowNumber() {
         return currentRowNumber;
     }
 
     public int getContractID()  {
         return contractID;
+    }
+
+    public int getDwellingUnitID() {
+        return dwellingUnitID;
     }
 
     public String getRenter() {

@@ -2,8 +2,6 @@
  * Created by Sebastian Ramsland on 11.05.2014.
  */
 
-import com.sun.rowset.CachedRowSetImpl;
-import javax.sql.rowset.FilteredRowSet;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -66,7 +64,8 @@ public class PersonUI {
     boolean insertMode;
 
     public static void main(String[] args) throws SQLException {
-        PersonUI personPanel = new PersonUI();
+        Person person = new Person();
+        PersonUI personPanel = new PersonUI(person);
     }
 
     // Konstruktør som oppretter ny personliste over alle personer. Viser personen øverst på lista.
@@ -112,7 +111,49 @@ public class PersonUI {
         });
     }
 
-    // Konstruktør som tar imot et personnummer og viser denne personen først i vinduet.
+    // Konstruktør som tar imot et allerede opprettet Person-objekt
+    public PersonUI(Person p) {
+        //
+        person = p;
+        try {
+            // Henter verdier
+            person.refreshValues();
+        } catch (SQLException e) {
+        }
+
+
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                } catch (ClassNotFoundException ex) {
+                } catch (InstantiationException ex) {
+                } catch (IllegalAccessException ex) {
+                } catch (UnsupportedLookAndFeelException ex) {
+                }
+
+
+                personFrame = new JFrame("Person");
+                personFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                personFrame.setResizable(true);
+                personFrame.setLayout(new BorderLayout());
+                personFrame.add(new MainPanel());
+                personFrame.setPreferredSize(new Dimension(1280, 720));
+                personFrame.pack();
+
+                // Midtstiller vinduet
+                personFrame.setLocationRelativeTo(null);
+
+                personFrame.setVisible(true);
+
+                // Oppdaterer feltene
+                updateFields();
+            }
+        });
+    }
+
+    // Konstruktør som tar imot et personnummer, oppretter en ny personliste og viser denne personen først i vinduet.
     public PersonUI(String pNo) throws SQLException {
 
         // Oppretter ny personliste over alle personer og søker opp personen med det spesifiserte personnummeret
@@ -122,80 +163,6 @@ public class PersonUI {
             person.findPersonWithPersonNo(pNo);
         } catch (SQLException e) {
         }
-
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException ex) {
-                } catch (InstantiationException ex) {
-                } catch (IllegalAccessException ex) {
-                } catch (UnsupportedLookAndFeelException ex) {
-                }
-
-
-                personFrame = new JFrame("Person");
-                personFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                personFrame.setResizable(false);
-                personFrame.setLayout(new BorderLayout());
-                personFrame.add(new MainPanel());
-                personFrame.setPreferredSize(new Dimension(1280, 720));
-                personFrame.pack();
-
-                // Midtstiller vinduet
-                personFrame.setLocationRelativeTo(null);
-
-                personFrame.setVisible(true);
-
-                // Oppdaterer feltene
-                updateFields();
-            }
-        });
-    }
-
-    // Konstruktør som tar imot SQLInterface, FilteredRowSet og Radnummer.
-    public PersonUI(SQLInterface dbInt, FilteredRowSet frs, int rowID) throws SQLException {
-
-        // Henter den cachede personlista og hopper til det spesifiserte radnummeret
-        person = new Person(dbInt, frs, rowID);
-
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException ex) {
-                } catch (InstantiationException ex) {
-                } catch (IllegalAccessException ex) {
-                } catch (UnsupportedLookAndFeelException ex) {
-                }
-
-
-                personFrame = new JFrame("Person");
-                personFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                personFrame.setResizable(false);
-                personFrame.setLayout(new BorderLayout());
-                personFrame.add(new MainPanel());
-                personFrame.setPreferredSize(new Dimension(1280, 720));
-                personFrame.pack();
-
-                // Midtstiller vinduet
-                personFrame.setLocationRelativeTo(null);
-
-                personFrame.setVisible(true);
-
-                // Oppdaterer feltene
-                updateFields();
-            }
-        });
-    }
-
-    // Konstruktør som tar imot SQLInterface, CachedRowSet og Radnummer.
-    public PersonUI(SQLInterface dbInt, CachedRowSetImpl crs, int rowID) throws SQLException {
-
-        // Henter den cachede personlista og hopper til det spesifiserte radnummeret
-        person = new Person(dbInt, crs, rowID);
 
         EventQueue.invokeLater(new Runnable() {
             @Override
@@ -598,9 +565,12 @@ public class PersonUI {
                 }
             } else if (e.getSource() == searchButton) {
                 try {
-                    String identity = JOptionPane.showInputDialog("Søk på personnummer");
-                    person.findPersonWithPersonNo(identity);
-                    updateFields();
+                    String input = JOptionPane.showInputDialog("Søk på personnummer");
+                    // Sjekker at input fikk en verdi
+                    if (input!=null) {
+                        person.findPersonWithPersonNo(input);
+                        updateFields();
+                    }
                 } catch (SQLException s) {
 
                 }
