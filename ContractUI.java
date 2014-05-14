@@ -1,3 +1,5 @@
+package GUI.Files;
+
 /**
  * Created by Sebastian Ramsland on 13.05.2014.
  */
@@ -7,7 +9,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLException;
 
-public class ContractUI {
+public class ContractUI extends JPanel{
     JFrame contractFrame;
     JLabel contractLabel;
     JLabel contractIDLabel;
@@ -90,9 +92,9 @@ public class ContractUI {
 
     boolean insertMode;
 
-    public static void main(String[] args) throws SQLException {
+    /*public static void main(String[] args) throws SQLException {
         ContractUI contractPanel = new ContractUI();
-    }
+    }*/
 
     // Konstruktør som oppretter lister over alle kontrakter, personer og boliger. Viser kontrakten som er øverst på lista.
     public ContractUI() throws SQLException {

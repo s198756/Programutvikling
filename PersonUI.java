@@ -1,3 +1,6 @@
+package GUI.Files;
+
+
 /**
  * Created by Sebastian Ramsland on 11.05.2014.
  */
@@ -7,7 +10,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLException;
 
-public class PersonUI {
+public class PersonUI extends JPanel{
     JFrame personFrame;
     JLabel fullNameLabel;
     JTable contractsTable;
@@ -63,10 +66,10 @@ public class PersonUI {
     Person person;
     boolean insertMode;
 
-    public static void main(String[] args) throws SQLException {
+    /*public static void main(String[] args) throws SQLException {
         Person person = new Person();
         PersonUI personPanel = new PersonUI(person);
-    }
+    }*/
 
     // Konstruktør som oppretter ny personliste over alle personer. Viser personen øverst på lista.
     public PersonUI() throws SQLException {
@@ -608,7 +611,7 @@ public class PersonUI {
                         updatePerson();
                     }
                 } catch (SQLException sql) {
-                  }
+                }
             } else {
                 personFrame.setVisible(false);
             }
