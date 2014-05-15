@@ -1,3 +1,5 @@
+package GUI.Files;
+
 /**
  * Created by Sebastian Ramsland on 09.05.2014.
  */
@@ -16,9 +18,10 @@ public class Location {
     // Oppretter SQLInterface
     private SQLInterface dbInterface = new SQLInterface();
 
-    // Oppretter CachedRowSet
+    // Initialiserer CachedRowSet
     private CachedRowSetImpl cachedRowSet;
 
+    // Oppretter CachedRowSet med fullstendig liste over norske postnummere, poststedsnavn, kommuner, fylker og adressekategorier.
     public Location () {
 
         // create SQLInterface object
@@ -33,7 +36,7 @@ public class Location {
         // create CachedRowSet
         try {
             cachedRowSet = new CachedRowSetImpl();
-            cachedRowSet = dbInterface.getRowSet();
+            cachedRowSet = dbInterface.getCachedRowSet();
         }
         catch (SQLException se) {
             System.out.println("Error code: " + se.getErrorCode() + "\tLocalizedMessage: " + se.getLocalizedMessage());
@@ -41,7 +44,8 @@ public class Location {
     }
 
     // Tar imot et postnummer og laster inn tilhørende stedsinformasjon.
-    public void refreshValues(int zip) throws SQLException {
+    // Returnerer "false" dersom postnummeret ikke eksisterer.
+    public boolean refreshValues(int zip) throws SQLException {
         try {
             // Søker igjennom tabellen
             while(cachedRowSet.next()) {
@@ -53,14 +57,15 @@ public class Location {
                     county = cachedRowSet.getString("county");
                     category = cachedRowSet.getString("category");
 
-                    return;
+                    return true;
                 }
             }
             System.out.println("Postnummeret eksisterer ikke. \n");
-            return;
+            return false;
         }
         catch (SQLException e){
             System.out.println("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+            return false;
         }
     }
 

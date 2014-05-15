@@ -1,4 +1,4 @@
-
+package GUI.Files;
 
 import java.sql.*;
 import javax.swing.*;
@@ -118,8 +118,7 @@ public class Contracttable {
         //eller megler
 
         PreparedStatement ps;
-        String query = "SELECT contract_id, valid, in_effect_date, expiration_date FROM contract WHERE broker " +
-                        "LIKE ? OR renter LIKE ?";
+        String query = "SELECT contract_id, valid, in_effect_date, expiration_date FROM contract WHERE broker LIKE ? OR renter LIKE ?";
         Vector rows = new Vector();
         Vector columnnames = new Vector();
 
@@ -150,7 +149,7 @@ public class Contracttable {
                 rows.addElement(newrows);
             }
             rs.close();
-            stmt.close();                               //lukker alle åpne forbindelser
+            ps.close();                               //lukker alle åpne forbindelser
             con.close();
 
         }catch(SQLException sqle){

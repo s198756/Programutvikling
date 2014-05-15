@@ -1,3 +1,5 @@
+package GUI.Files;
+
 /**
  * Created by Sebastian Ramsland on 30.04.2014.
  */
@@ -67,12 +69,11 @@ public class DwellingUnit {
     private boolean rowSetTypeIsFiltered;
 
     // Oppretter radnummer (til pekeren)
-    private int currentRowNumber = 1;
     private int nextRowNumber;
     private int previousRowNumber;
 
     // Angir rowsettets antall rader
-    private int amountRows;
+    private int totalAmountOfRows;
 
     // Angir toppen av rowset
     private static final int TOP_OF_ROWSET = 1;
@@ -93,10 +94,10 @@ public class DwellingUnit {
             System.exit(1);
         }
 
-        // Lager CachedRowSet av SQL-queryen
+        // Setter inn CachedRowSet fra SQL-queryen
         try {
             cachedRowSet = new CachedRowSetImpl();
-            cachedRowSet = dbInterface.getRowSet();
+            cachedRowSet = dbInterface.getCachedRowSet();
             cachedRowSet.setTableName(TABLENAME);
             int [] keys = {1};
             cachedRowSet.setKeyColumns(keys);
@@ -105,7 +106,7 @@ public class DwellingUnit {
             cachedRowSet.last();
 
             // Henter ut antall rader
-            amountRows = cachedRowSet.getRow();
+            totalAmountOfRows = cachedRowSet.getRow();
 
             // Hopper tilbake til øverste rad
             cachedRowSet.first();
@@ -117,57 +118,46 @@ public class DwellingUnit {
         }
     }
 
-    // Konstruktør som tar imot eksisterende SQLInterface, CachedRowSet og radnummer (et ufiltrert søk)
-    public DwellingUnit (SQLInterface dbInt, CachedRowSetImpl crs, int rowID) throws SQLException {
+    // Konstruktør som tar imot eksisterende SQLInterface, radnummer og rowset-type. Henter fram FilteredRowSet eller CachedRowSet fra SQLInterface.
+    public DwellingUnit (SQLInterface dbInt, int rowID, boolean isFiltered) throws SQLException {
         // Setter inn SQLInterface
         dbInterface = dbInt;
 
-        cachedRowSet = crs;
-        cachedRowSet.setTableName(TABLENAME);
-        int [] keys = {1};
-        cachedRowSet.setKeyColumns(keys);
+        if (isFiltered) {
+            filteredRowSet = dbInterface.getFilteredRowSet();
+            filteredRowSet.setTableName(TABLENAME);
+            int [] keys = {1};
+            filteredRowSet.setKeyColumns(keys);
 
-        // Hopper til nederste rad for å finne antall rader
-        cachedRowSet.last();
+            // Hopper til nederste rad for å finne antall rader
+            filteredRowSet.last();
 
-        // Henter ut antall rader
-        amountRows = cachedRowSet.getRow();
+            // Henter ut antall rader
+            totalAmountOfRows = filteredRowSet.getRow();
 
-        // Setter inn mottatt radnummer
-        currentRowNumber = rowID;
+            // Setter pekeren på radnummeret
+            jumpToDwellingUnit(rowID);
 
-        // Setter pekeren på radnummeret
-        jumpToDwellingUnit(rowID);
+            // Nåværende rowSet er av typen "Filtered"
+            rowSetTypeIsFiltered = true;
+        } else {
+            cachedRowSet = dbInterface.getCachedRowSet();
+            cachedRowSet.setTableName(TABLENAME);
+            int [] keys = {1};
+            cachedRowSet.setKeyColumns(keys);
 
-        // Nåværende rowSet er av typen "Cached"
-        rowSetTypeIsFiltered = false;
-    }
+            // Hopper til nederste rad for å finne antall rader
+            cachedRowSet.last();
 
-    // Konstruktør som tar imot eksisterende SQLInterface, FilteredRowSet og radnummer (et filtrert søk)
-    public DwellingUnit (SQLInterface dbInt, FilteredRowSet frs, int rowID) throws SQLException {
-        // Setter inn SQLInterface
-        dbInterface = dbInt;
+            // Henter ut antall rader
+            totalAmountOfRows = cachedRowSet.getRow();
 
-        // Setter inn FilteredRowSet og tabellnavn
-        filteredRowSet = frs;
-        filteredRowSet.setTableName(TABLENAME);
-        int [] keys = {1};
-        cachedRowSet.setKeyColumns(keys);
+            // Setter pekeren på radnummeret
+            jumpToDwellingUnit(rowID);
 
-        // Hopper til nederste rad for å finne antall rader
-        cachedRowSet.last();
-
-        // Henter ut antall rader
-        amountRows = cachedRowSet.getRow();
-
-        // Setter inn mottatt radnummer
-        currentRowNumber = rowID;
-
-        // Setter pekeren på radnummeret
-        jumpToDwellingUnit(rowID);
-
-        // Nåværende rowSet er av typen "Filtered"
-        rowSetTypeIsFiltered = true;
+            // Nåværende rowSet er av typen "Cached"
+            rowSetTypeIsFiltered = false;
+        }
     }
 
     // Innlasting av bolig med nåværende radnummer
@@ -278,21 +268,30 @@ public class DwellingUnit {
     }
 
     // Innlasting av bolig med et spesifisert radnummer
-    public void jumpToDwellingUnit(int rowNo) throws SQLException {
-        currentRowNumber = rowNo;
-        previousRowNumber -= currentRowNumber - 1;
-        nextRowNumber += currentRowNumber + 1;
-        String messageJumpToDwellingUnit = "Forsøker å hente ut verdier til boligen på rad " + currentRowNumber + ".\n";
+    public boolean jumpToDwellingUnit(int rowNo) throws SQLException {
+
+        if (rowSetTypeIsFiltered)  {
+            previousRowNumber -= filteredRowSet.getRow() - 1;
+            nextRowNumber += filteredRowSet.getRow() + 1;
+        }
+        else {
+            previousRowNumber -= cachedRowSet.getRow() - 1;
+            nextRowNumber += cachedRowSet.getRow() + 1;
+        }
+
+        String messageJumpToDwellingUnit = "Hentet ut informasjon om boligen.";
         try {
             infoText = messageJumpToDwellingUnit;
             refreshValues();
+            return true;
         } catch (SQLException e){
             infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+            return false;
         }
     }
 
     // Søk opp bolig med bolig ID (unik verdi)
-    public void findDwellingUnitWithID(int duID) throws SQLException {
+    public boolean findDwellingUnitWithID(int duID) throws SQLException {
 
         String messageWhenFindDwellingUnitWithID = "Boligen ble funnet. Flytter pekeren til boligen og henter verdier. \n";
         String messageWhenCouldNotFindDwellingUnitWithID = "Fant ikke boligen med den angitte bolig IDen. \n";
@@ -307,12 +306,14 @@ public class DwellingUnit {
                     if (duID == filteredRowSet.getInt("dwelling_unit_id")) {
                         infoText = messageWhenFindDwellingUnitWithID;
                         jumpToDwellingUnit(filteredRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindDwellingUnitWithID;
+                return false;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
 
@@ -326,67 +327,72 @@ public class DwellingUnit {
                     if(duID == cachedRowSet.getInt("dwelling_unit_id")) {
                         infoText = messageWhenFindDwellingUnitWithID;
                         jumpToDwellingUnit(cachedRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindDwellingUnitWithID;
-
+                return false;
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
 
     // Innlasting av neste bolig
-    public void nextPerson() throws SQLException {
+    public boolean nextPerson() throws SQLException {
 
         String messageWhenNextDwellingUnit = "Fant fram til neste bolig. \n";
         String messageWhenLastDwellingUnit = "Du har nådd bunnen av listen. \n";
 
         if (rowSetTypeIsFiltered) {
             // Sjekker om pekeren står på siste rad
-            if (filteredRowSet.getRow() == amountRows) {
+            if (filteredRowSet.getRow() == totalAmountOfRows) {
                 infoText = messageWhenLastDwellingUnit;
+                return false;
             }
             else {
-                currentRowNumber += 1;
-                previousRowNumber = currentRowNumber - 1;
-                nextRowNumber = currentRowNumber + 1;
+                previousRowNumber = filteredRowSet.getRow() - 1;
+                nextRowNumber = filteredRowSet.getRow() + 1;
 
                 // Hopper til neste rad
                 try {
                     infoText = messageWhenNextDwellingUnit;
                     filteredRowSet.next();
                     refreshValues();
+                    return true;
                 } catch (SQLException e) {
                     infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                    return false;
                 }
             }
         }
         else {
             // Sjekker om pekeren står på siste rad
-            if (cachedRowSet.getRow() == amountRows) {
+            if (cachedRowSet.getRow() == totalAmountOfRows) {
                 infoText = messageWhenLastDwellingUnit;
             }
             else {
-                currentRowNumber += 1;
-                previousRowNumber = currentRowNumber - 1;
-                nextRowNumber = currentRowNumber + 1;
+                previousRowNumber = cachedRowSet.getRow() - 1;
+                nextRowNumber = cachedRowSet.getRow() + 1;
 
                 // Hopper til neste rad
                 try {
                     infoText = messageWhenNextDwellingUnit;
                     cachedRowSet.next();
                     refreshValues();
+                    return true;
                 } catch (SQLException e) {
                     infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                    return false;
                 }
             }
+            return false;
         }
     }
 
     // Innlasting av forrige bolig
-    public void previousDwellingUnit() throws SQLException {
+    public boolean previousDwellingUnit() throws SQLException {
 
         String messageWhenPreviousDwellingUnit = "Fant fram til forrige bolig. \n";
         String messageWhenFirstDwellingUnit = "Du har nådd toppen av listen. \n";
@@ -395,19 +401,21 @@ public class DwellingUnit {
             // Sjekker om pekeren står på øverste rad
             if (filteredRowSet.getRow() == TOP_OF_ROWSET) {
                 infoText = messageWhenFirstDwellingUnit;
+                return false;
             }
             else {
-                currentRowNumber -= 1;
-                previousRowNumber = currentRowNumber - 1;
-                nextRowNumber = currentRowNumber + 1;
+                previousRowNumber = filteredRowSet.getRow() - 1;
+                nextRowNumber = filteredRowSet.getRow() + 1;
 
                 // Hopper til neste rad
                 try {
                     filteredRowSet.previous();
                     infoText = messageWhenPreviousDwellingUnit;
                     refreshValues();
+                    return true;
                 } catch (SQLException e) {
                     infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                    return false;
                 }
             }
         }
@@ -417,24 +425,26 @@ public class DwellingUnit {
                 infoText = messageWhenFirstDwellingUnit;
             }
             else {
-                currentRowNumber -= 1;
-                previousRowNumber = currentRowNumber - 1;
-                nextRowNumber = currentRowNumber + 1;
+                previousRowNumber = cachedRowSet.getRow() - 1;
+                nextRowNumber = cachedRowSet.getRow() + 1;
 
                 // Hopper til neste rad
                 try {
                     cachedRowSet.previous();
                     infoText = messageWhenPreviousDwellingUnit;
                     refreshValues();
+                    return true;
                 } catch (SQLException e) {
                     infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                    return false;
                 }
             }
+            return false;
         }
     }
 
     // Flytter pekeren til en innsettingsrad. Må kalles opp ved opprettelse av ny person.
-    public void moveToInsertRow() throws SQLException {
+    public boolean moveToInsertRow() throws SQLException {
 
         String messageWhenMoveToInsertRow = "Fyll ut de påkrevde feltene og trykk 'Lagre' for å opprette en ny utleiebolig.\n";
 
@@ -442,45 +452,55 @@ public class DwellingUnit {
             try {
                 filteredRowSet.moveToInsertRow();
                 infoText = messageWhenMoveToInsertRow;
+                return true;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
         else {
             try {
                 cachedRowSet.moveToInsertRow();
                 infoText = messageWhenMoveToInsertRow;
+                return true;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
 
     // Setter inn nåværende innsettingsrad. Pekeren må befinne seg på en innsettingsrad.
-    public void insertRow() throws SQLException {
+    public boolean insertRow() throws SQLException {
 
         String messageWhenInsertRow = "Raden ble lagret i cache. \n";
 
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.insertRow();
+                totalAmountOfRows += 1;
                 infoText = messageWhenInsertRow;
+                return true;
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
         else {
             try {
                 cachedRowSet.insertRow();
+                totalAmountOfRows += 1;
                 infoText = messageWhenInsertRow;
+                return true;
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
 
     // Pekeren flyttes til nåværende rad. Har kun effekt om pekeren er på en innsettingsrad.
-    public void moveToCurrentRow() throws SQLException {
+    public boolean moveToCurrentRow() throws SQLException {
 
         String messageWhenMovedToRow = "Peker flyttet til nåværende rad. \n";
 
@@ -488,22 +508,26 @@ public class DwellingUnit {
             try {
                 filteredRowSet.moveToCurrentRow();
                 infoText = messageWhenMovedToRow;
+                return true;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
         else {
             try {
                 cachedRowSet.moveToCurrentRow();
                 infoText = messageWhenMovedToRow;
+                return true;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
 
     // Kansellerer alle oppdateringer
-    public void cancelUpdates() throws SQLException {
+    public boolean cancelUpdates() throws SQLException {
 
         String messageWhenCancelUpdates = "Alle endringer ble avbrutt. \n";
 
@@ -511,16 +535,20 @@ public class DwellingUnit {
             try {
                 filteredRowSet.cancelRowUpdates();
                 infoText = messageWhenCancelUpdates;
+                return true;
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
         else {
             try {
                 cachedRowSet.cancelRowUpdates();
                 infoText = messageWhenCancelUpdates;
+                return true;
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
@@ -616,7 +644,7 @@ public class DwellingUnit {
     }
 
     // Oppdaterer nåværende rad
-    public void updateRow() throws SQLException {
+    public boolean updateRow() throws SQLException {
 
         String messageWhenUpdateRow = "Oppdatering av raden ble lagret i cache. \n";
 
@@ -624,22 +652,26 @@ public class DwellingUnit {
             try {
                 filteredRowSet.updateRow();
                 infoText = messageWhenUpdateRow;
+                return true;
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
         else {
             try {
                 cachedRowSet.updateRow();
                 infoText = messageWhenUpdateRow;
+                return true;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
 
     // Sletter nåværende rad
-    public void deleteRow() throws SQLException {
+    public boolean deleteRow() throws SQLException {
 
         String messageWhenDeleteRow = "Raden ble slettet fra cache. \n";
 
@@ -647,22 +679,26 @@ public class DwellingUnit {
             try {
                 filteredRowSet.deleteRow();
                 infoText = messageWhenDeleteRow;
+                return true;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
         else {
             try {
                 cachedRowSet.deleteRow();
                 infoText = messageWhenDeleteRow;
+                return true;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
 
     // Sender de oppdaterte feltene til databasen
-    public void acceptChanges() throws SQLException {
+    public boolean acceptChanges() throws SQLException {
 
         String messageWhenAcceptChanges = "Alle endringer ble sendt til databasen. \n";
         String errorMessageWhenAcceptChanges = "FEIL: Kunne ikke sende endringer til databasen. \n";
@@ -670,25 +706,66 @@ public class DwellingUnit {
         if (rowSetTypeIsFiltered) {
             if (dbInterface.commitToDatabase(filteredRowSet)) {
                 infoText = messageWhenAcceptChanges;
+                return true;
             } else {
                 infoText = errorMessageWhenAcceptChanges;
+                return false;
             }
         }
         else {
             if (dbInterface.commitToDatabase(cachedRowSet)) {
                 infoText = messageWhenAcceptChanges;
+                return true;
             } else {
                 infoText = errorMessageWhenAcceptChanges;
+                return false;
             }
         }
     }
 
-    public String getInfoText( ) {
+    // Hopper til nederste rad
+    public void last() throws SQLException {
+        try {
+            if (rowSetTypeIsFiltered) {
+                // Flytter peker til nederste rad
+                filteredRowSet.last();
+
+                // Setter nåværende nadnummer lik nederste rad
+                previousRowNumber = filteredRowSet.getRow() -1;
+                nextRowNumber = filteredRowSet.getRow() + 1;
+
+                // Henter verdier fra nåværende rad
+                refreshValues();
+            }
+            else {
+                // Flytter peker til nederste rad
+                cachedRowSet.last();
+
+                // Setter nåværende nadnummer lik nederste rad
+                previousRowNumber = cachedRowSet.getRow() -1;
+                nextRowNumber = cachedRowSet.getRow() + 1;
+
+                // Henter verdier fra nåværende rad
+                refreshValues();
+            }
+        } catch (SQLException e) {
+            infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+        }
+    }
+
+    public int getTotalAmountOfRows() {
+        return totalAmountOfRows;
+    }
+
+    public String getInfoText() {
         return infoText;
     }
 
-    public int getCurrentRowNumber() {
-        return currentRowNumber;
+    public int getCurrentRowNumber() throws SQLException {
+        if (rowSetTypeIsFiltered)
+            return filteredRowSet.getRow();
+        else
+            return cachedRowSet.getRow();
     }
 
     public int getDwellingUnitID() {
@@ -717,7 +794,7 @@ public class DwellingUnit {
 
     public String getStreet() {
         return street;
-        }
+    }
 
     public String getStreetNo() {
         return streetNo;

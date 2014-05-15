@@ -1,11 +1,15 @@
+package GUI.Files;
+
 /**
  * Created by Sebastian Ramsland on 01.05.2014.
  */
 
 import com.sun.rowset.CachedRowSetImpl;
+import com.sun.rowset.FilteredRowSetImpl;
+
 import javax.sql.rowset.FilteredRowSet;
 import java.sql.*;
-import java.util.Date;
+import java.sql.Date;
 
 public class Contract {
 
@@ -21,8 +25,8 @@ public class Contract {
     private boolean hasPaidDepositum;                   // Er depositum innbetalt?
     private boolean isSignedByRenter;                   // Er kontrakten signert av leietaker?
     private boolean isSignedByBroker;                   // Er kontrakten signert av megler?
-    private Date inEffectDate;                          // Startdato for angitt kontraktperiode
-    private Date expirationDate;                        // Sluttdato for angitt kontraktperiode
+    private Timestamp inEffectDate;                     // Startdato for angitt kontraktperiode
+    private Timestamp expirationDate;                   // Sluttdato for angitt kontraktperiode
 
     // Timestamps
     private Timestamp created;
@@ -46,7 +50,7 @@ public class Contract {
     private int previousRowNumber;
 
     // Angir rowsettets antall rader
-    private int amountRows;
+    private int totalAmountOfRows;
 
     // Angir toppen av rowset
     private static final int TOP_OF_ROWSET = 1;
@@ -67,10 +71,10 @@ public class Contract {
             System.exit(1);
         }
 
-        // Lager CachedRowSet av SQL-queryen
+        // Setter inn CachedRowSet fra SQL-queryen
         try {
             cachedRowSet = new CachedRowSetImpl();
-            cachedRowSet = dbInterface.getRowSet();
+            cachedRowSet = dbInterface.getCachedRowSet();
             cachedRowSet.setTableName(TABLENAME);
             int [] keys = {1};
             cachedRowSet.setKeyColumns(keys);
@@ -79,7 +83,7 @@ public class Contract {
             cachedRowSet.last();
 
             // Henter ut antall rader
-            amountRows = cachedRowSet.getRow();
+            totalAmountOfRows = cachedRowSet.getRow();
 
             // Hopper tilbake til øverste rad
             cachedRowSet.first();
@@ -92,57 +96,47 @@ public class Contract {
         }
     }
 
-    // Konstruktør som tar imot eksisterende SQLInterface, CachedRowSet og radnummer (et ufiltrert søk)
-    public Contract (SQLInterface dbInt, CachedRowSetImpl crs, int rowID) throws SQLException {
+    // Konstruktør som tar imot eksisterende SQLInterface, radnummer og rowset-type. Henter fram FilteredRowSet eller CachedRowSet fra SQLInterface.
+    public Contract (SQLInterface dbInt, int rowID, boolean isFiltered) throws SQLException {
         // Setter inn SQLInterface
         dbInterface = dbInt;
 
-        cachedRowSet = crs;
-        cachedRowSet.setTableName(TABLENAME);
-        int [] keys = {1};
-        cachedRowSet.setKeyColumns(keys);
+        if (isFiltered) {
+            filteredRowSet = new FilteredRowSetImpl();
+            filteredRowSet = dbInterface.getFilteredRowSet();
+            filteredRowSet.setTableName(TABLENAME);
+            int [] keys = {1};
+            filteredRowSet.setKeyColumns(keys);
 
-        // Hopper til nederste rad for å finne antall rader
-        cachedRowSet.last();
+            // Hopper til nederste rad for å finne antall rader
+            filteredRowSet.last();
 
-        // Henter ut antall rader
-        amountRows = cachedRowSet.getRow();
+            // Henter ut antall rader
+            totalAmountOfRows = filteredRowSet.getRow();
 
-        // Setter inn mottatt radnummer
-        currentRowNumber = rowID;
+            // Setter pekeren på radnummeret
+            jumpToContract(rowID);
 
-        // Setter pekeren på radnummeret
-        jumpToContract(rowID);
+            // Nåværende rowSet er av typen "Filtered"
+            rowSetTypeIsFiltered = true;
+        } else {
+            cachedRowSet = dbInterface.getCachedRowSet();
+            cachedRowSet.setTableName(TABLENAME);
+            int [] keys = {1};
+            cachedRowSet.setKeyColumns(keys);
 
-        // Nåværende rowSet er av typen "Cached"
-        rowSetTypeIsFiltered = false;
-    }
+            // Hopper til nederste rad for å finne antall rader
+            cachedRowSet.last();
 
-    // Konstruktør som tar imot eksisterende SQLInterface, FilteredRowSet og radnummer (et filtrert søk)
-    public Contract (SQLInterface dbInt, FilteredRowSet frs, int rowID) throws SQLException {
-        // Setter inn SQLInterface
-        dbInterface = dbInt;
+            // Henter ut antall rader
+            totalAmountOfRows = cachedRowSet.getRow();
 
-        // Setter inn FilteredRowSet og tabellnavn
-        filteredRowSet = frs;
-        filteredRowSet.setTableName(TABLENAME);
-        int [] keys = {1};
-        cachedRowSet.setKeyColumns(keys);
+            // Setter pekeren på radnummeret
+            jumpToContract(rowID);
 
-        // Hopper til nederste rad for å finne antall rader
-        cachedRowSet.last();
-
-        // Henter ut antall rader
-        amountRows = cachedRowSet.getRow();
-
-        // Setter inn mottatt radnummer
-        currentRowNumber = rowID;
-
-        // Setter pekeren på radnummeret
-        jumpToContract(rowID);
-
-        // Nåværende rowSet er av typen "Filtered"
-        rowSetTypeIsFiltered = true;
+            // Nåværende rowSet er av typen "Cached"
+            rowSetTypeIsFiltered = false;
+        }
     }
 
     // Innlasting av kontrakt med nåværende radnummer
@@ -150,7 +144,7 @@ public class Contract {
         if (rowSetTypeIsFiltered) {
             try {
                 // Hopper til riktig rad
-                cachedRowSet.absolute(currentRowNumber);
+                cachedRowSet.absolute(cachedRowSet.getRow());
 
                 // Leser av verdier
 
@@ -163,8 +157,8 @@ public class Contract {
                 hasPaidDepositum = filteredRowSet.getBoolean("paid_depositum");
                 isSignedByRenter = filteredRowSet.getBoolean("signed_by_renter");
                 isSignedByBroker = filteredRowSet.getBoolean("signed_by_broker");
-                inEffectDate = filteredRowSet.getDate("in_effect_date");
-                expirationDate = filteredRowSet.getDate("expiration_date");
+                inEffectDate = filteredRowSet.getTimestamp("in_effect_date");
+                expirationDate = filteredRowSet.getTimestamp("expiration_date");
 
                 // Timestamps
                 created = filteredRowSet.getTimestamp("created");
@@ -177,7 +171,7 @@ public class Contract {
         else {
             try {
                 // Hopper til riktig rad
-                cachedRowSet.absolute(currentRowNumber);
+                cachedRowSet.absolute(cachedRowSet.getRow());
 
                 // Leser av verdier
 
@@ -190,8 +184,8 @@ public class Contract {
                 hasPaidDepositum = cachedRowSet.getBoolean("paid_depositum");
                 isSignedByRenter = cachedRowSet.getBoolean("signed_by_renter");
                 isSignedByBroker = cachedRowSet.getBoolean("signed_by_broker");
-                inEffectDate = cachedRowSet.getDate("in_effect_date");
-                expirationDate = cachedRowSet.getDate("expiration_date");
+                inEffectDate = cachedRowSet.getTimestamp("in_effect_date");
+                expirationDate = cachedRowSet.getTimestamp("expiration_date");
 
                 // Timestamps
                 created = cachedRowSet.getTimestamp("created");
@@ -204,21 +198,31 @@ public class Contract {
     }
 
     // Innlasting av kontrakt med et spesifisert radnummer
-    public void jumpToContract(int rowNo) throws SQLException {
-        currentRowNumber = rowNo;
-        previousRowNumber -= currentRowNumber - 1;
-        nextRowNumber += currentRowNumber + 1;
-        String messageJumpToContract = "Forsøker å hente ut verdier til kontrakten på rad " + currentRowNumber + ".\n";
+    public boolean jumpToContract(int rowNo) throws SQLException {
+
+        if (rowSetTypeIsFiltered)  {
+            previousRowNumber -= filteredRowSet.getRow() - 1;
+            nextRowNumber += filteredRowSet.getRow() + 1;
+        }
+        else {
+            previousRowNumber -= cachedRowSet.getRow() - 1;
+            nextRowNumber += cachedRowSet.getRow() + 1;
+        }
+
+        String messageJumpToContract = "Hentet ut informasjon om kontrakten.";
         try {
             infoText = messageJumpToContract;
             refreshValues();
+            return true;
         } catch (SQLException e){
             infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+            return false;
         }
     }
 
     // Søk opp kontrakt med kontrakt ID (unik verdi)
-    public void findContractWithID(int cID) throws SQLException {
+    // Returnerer false dersom kontrakten ikke ble funnet.
+    public boolean findContractWithID(int cID) throws SQLException {
 
         String messageWhenFindContractWithID = "Kontrakten ble funnet. Flytter pekeren til kontrakten og henter verdier. \n";
         String messageWhenCouldNotFindContractWithID = "Fant ikke kontrakten med den angitte kontrakt-IDen. \n";
@@ -233,12 +237,14 @@ public class Contract {
                     if (cID == filteredRowSet.getInt("contract_id")) {
                         infoText = messageWhenFindContractWithID;
                         jumpToContract(filteredRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindContractWithID;
+                return false;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
 
@@ -252,12 +258,14 @@ public class Contract {
                     if(cID == cachedRowSet.getInt("contract_id")) {
                         infoText = messageWhenFindContractWithID;
                         jumpToContract(cachedRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindContractWithID;
+                return false;
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
@@ -270,13 +278,12 @@ public class Contract {
 
         if (rowSetTypeIsFiltered) {
             // Sjekker om pekeren står på siste rad
-            if (filteredRowSet.getRow() == amountRows) {
+            if (filteredRowSet.getRow() == totalAmountOfRows) {
                 infoText = messageWhenLastContract;
             }
             else {
-                currentRowNumber += 1;
-                previousRowNumber = currentRowNumber - 1;
-                nextRowNumber = currentRowNumber + 1;
+                previousRowNumber = filteredRowSet.getRow() - 1;
+                nextRowNumber = filteredRowSet.getRow() + 1;
 
                 // Hopper til neste rad
                 try {
@@ -290,13 +297,12 @@ public class Contract {
         }
         else {
             // Sjekker om pekeren står på siste rad
-            if (cachedRowSet.getRow() == amountRows) {
+            if (cachedRowSet.getRow() == totalAmountOfRows) {
                 infoText = messageWhenLastContract;
             }
             else {
-                currentRowNumber += 1;
-                previousRowNumber = currentRowNumber - 1;
-                nextRowNumber = currentRowNumber + 1;
+                previousRowNumber = cachedRowSet.getRow() - 1;
+                nextRowNumber = cachedRowSet.getRow() + 1;
 
                 // Hopper til neste rad
                 try {
@@ -322,9 +328,8 @@ public class Contract {
                 infoText = messageWhenFirstContract;
             }
             else {
-                currentRowNumber -= 1;
-                previousRowNumber = currentRowNumber - 1;
-                nextRowNumber = currentRowNumber + 1;
+                previousRowNumber = filteredRowSet.getRow() - 1;
+                nextRowNumber = filteredRowSet.getRow() + 1;
 
                 // Hopper til neste rad
                 try {
@@ -342,9 +347,8 @@ public class Contract {
                 infoText = messageWhenFirstContract;
             }
             else {
-                currentRowNumber -= 1;
-                previousRowNumber = currentRowNumber - 1;
-                nextRowNumber = currentRowNumber + 1;
+                previousRowNumber = cachedRowSet.getRow() - 1;
+                nextRowNumber = cachedRowSet.getRow() + 1;
 
                 // Hopper til neste rad
                 try {
@@ -361,12 +365,12 @@ public class Contract {
     // Flytter pekeren til en innsettingsrad. Må kalles opp ved opprettelse av ny kontrakt.
     public void moveToInsertRow() throws SQLException {
 
-        String messageWhenMoveToInsertRow = "Peker flyttet til innsettingsrad. \n";
+        String messageWhenMoveToInsertRow = "Fyll ut de påkrevde feltene og trykk 'Lagre' for å opprette en ny kontrakt. \n";
 
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.moveToInsertRow();
-               infoText = messageWhenMoveToInsertRow;
+                infoText = messageWhenMoveToInsertRow;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
             }
@@ -430,7 +434,7 @@ public class Contract {
     // Kansellerer alle oppdateringer
     public void cancelUpdates() throws SQLException {
 
-        String messageWhenCancelUpdates = "Alle endringer lagret i cachen ble fjernet. \n";
+        String messageWhenCancelUpdates = "Alle endringer lagret i cache ble fjernet. \n";
 
         if (rowSetTypeIsFiltered) {
             try {
@@ -453,13 +457,10 @@ public class Contract {
     // Oppdateringsmetode for Automatiske verdier
     public void updateAuto(String columnName) throws SQLException {
 
-        String messageWhenUpdateNull = "Automatisk verdi oppdatert. \n";
-
         if (rowSetTypeIsFiltered) {
             try {
                 // Oppdaterer felt til FilteredRowset
                 filteredRowSet.updateNull(columnName);
-                infoText = messageWhenUpdateNull;
             } catch (SQLException s) {
                 infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
@@ -468,7 +469,28 @@ public class Contract {
             try {
                 // Oppdaterer felt til CachedRowSet
                 cachedRowSet.updateNull(columnName);
-                infoText = messageWhenUpdateNull;
+            } catch (SQLException s) {
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
+            }
+        }
+    }
+
+
+    // Oppdateringsmetode for Timestampverdier
+    public void updateTimestampValue(String columnName, Timestamp value) throws SQLException {
+
+        if (rowSetTypeIsFiltered) {
+            try {
+                // Oppdaterer felt til FilteredRowset
+                filteredRowSet.updateTimestamp(columnName, value);
+            } catch (SQLException s) {
+                infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
+            }
+        }
+        else {
+            try {
+                // Oppdaterer felt til CachedRowSet
+                cachedRowSet.updateTimestamp(columnName, value);
             } catch (SQLException s) {
                 infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
             }
@@ -585,205 +607,75 @@ public class Contract {
     }
 
     // Sender de oppdaterte feltene til databasen
-    public void acceptChanges() throws SQLException {
+    public boolean acceptChanges() throws SQLException {
 
-        String messageWhenAcceptChanges = "Alle endringer i cache ble sendt til databasen. \n";
-        String errorMessageWhenAcceptChanges = "FEIL: Kunne ikke sende cache-endringer til databasen. \n";
+        String messageWhenAcceptChanges = "Endringer ble sendt til databasen. \n";
+        String errorMessageWhenAcceptChanges = "FEIL: Kunne ikke sende endringer til databasen. \n";
 
         if (rowSetTypeIsFiltered) {
             if (dbInterface.commitToDatabase(filteredRowSet)) {
                 infoText = messageWhenAcceptChanges;
+                return true;
             } else {
                 infoText = errorMessageWhenAcceptChanges;
+                return false;
             }
         }
         else {
             if (dbInterface.commitToDatabase(cachedRowSet)) {
                 infoText = messageWhenAcceptChanges;
+                System.out.println("Etter acceptchanges: " + cachedRowSet.getRow());
+                return true;
             } else {
                 infoText = errorMessageWhenAcceptChanges;
+                return false;
             }
         }
     }
 
-    // Returnerer "true" dersom kravene til å oppnå en gyldig kontrakt oppfylles.
-    public boolean checkValidation() throws SQLException {
-
-        Person verifyPerson = new Person();
-        DwellingUnit verifyDwellingUnit = new DwellingUnit();
-
-        // Henter ut nødvendig informasjon om kontraktens megler
-        verifyPerson.findPersonWithPersonNo(broker);
-        boolean brokerIsBroker = verifyPerson.getIsBroker();
-        String brokerPersonNo = verifyPerson.getPersonNo();
-
-        // Henter ut nødvendig informasjon om kontraktens leietaker
-        verifyPerson.findPersonWithPersonNo(renter);
-        String renterPersonNo = verifyPerson.getPersonNo();
-
-        // Henter ut nødvendig informasjon om kontraktens bolig
-        verifyDwellingUnit.findDwellingUnitWithID(dwellingUnitID);
-        String propertyOwner = verifyDwellingUnit.getPropertyOwner();
-
-        // Oppretter nåværende dato
-        Date now = new Date();
-
-        if (!brokerIsBroker) {
-            infoText = "FEIL: Angitt megler i kontrakten er ingen megler. \n";
-            return false;
-        }
-
-        else if (renterPersonNo.equals(propertyOwner)) {
-            infoText = "Feil: Leietakeren kan ikke leie sin egen bolig. \n";
-            return false;
-        }
-
-        else if (renterPersonNo.equals(brokerPersonNo)) {
-            infoText = "FEIL: Leietakeren kan ikke være samme person som megleren. \n";
-            return false;
-        }
-
-        else if (!isSignedByRenter) {
-            infoText = "FEIL: Kontrakten er ikke signert av leietaker. \n";
-            return false;
-        }
-
-        else if (!isSignedByBroker) {
-            infoText = "FEIL: Kontrakten er ikke signert av megler. \n";
-            return false;
-        }
-
-        else if(!now.after(inEffectDate) || !now.before(expirationDate)) {
-            infoText = "FEIL: Dagens dato er ikke innenfor kontraktperioden. \n";
-            return false;
-        }
-
-        else {
-            return true;
-        }
-    }
-
-    // Oppdaterer kontraktfeltet "valid" i databasen til korrekt status.
-    public void setContractValidation() throws SQLException {
-        if (checkValidation() && isValid) {
-            infoText = "Kontrakten er allerede gyldig. Metoden foretar seg ingen endringer.";
-            return;
-        }
-        else if (checkValidation()) {
-            if (rowSetTypeIsFiltered){
-                try {
-                    // Oppdaterer felt
-                    filteredRowSet.moveToCurrentRow();
-                    filteredRowSet.updateBoolean("valid", true);
-                    filteredRowSet.updateRow();
-                    infoText = "Gyldighetsstatus til kontrakten ble endret. \n";
-                }
-                catch (SQLException s) {
-                    infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
-                }
-            }
-            else {
-                try {
-                    // Oppdaterer felt
-                    cachedRowSet.moveToCurrentRow();
-                    cachedRowSet.updateBoolean("valid", true);
-                    cachedRowSet.updateRow();
-                    infoText = "Gyldighetsstatus til kontrakten ble endret. \n";
-                } catch (SQLException s) {
-                    infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
-                }
-            }
-
-            // Sender oppdatering til databasen
-            acceptChanges();
-            infoText = "Kontrakten er nå oppdatert til status: Gyldig.";
-
-            return;
-        }
-
-        else if (!checkValidation() && !this.isValid) {
-            infoText = "Kontrakten er allerede ugyldig. Metoden foretar seg ingen endringer.";
-            return;
-        }
-
-        else
-        {
+    // Hopper til nederste rad
+    public void last() throws SQLException {
+        try {
             if (rowSetTypeIsFiltered) {
-                try {
-                    // Oppdaterer felt
-                    filteredRowSet.moveToCurrentRow();
-                    filteredRowSet.updateBoolean("valid", false);
-                    filteredRowSet.updateRow();
-                    infoText = "Oppdatering av raden ble lagret i cache. \n";
-                } catch (SQLException s) {
-                    infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
-                }
+                // Flytter peker til nederste rad
+                filteredRowSet.last();
+
+                // Setter nåværende nadnummer lik nederste rad
+                previousRowNumber = filteredRowSet.getRow() -1;
+                nextRowNumber = filteredRowSet.getRow() + 1;
+
+                // Henter verdier fra nåværende rad
+                refreshValues();
             }
             else {
-                try {
-                    // Oppdaterer felt
-                    cachedRowSet.moveToCurrentRow();
-                    cachedRowSet.updateBoolean("valid", false);
-                    cachedRowSet.updateRow();
-                    infoText = "Oppdatering av raden ble lagret i cache. \n";
-                } catch (SQLException s) {
-                    infoText = "Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage();
-                }
-            }
+                // Flytter peker til nederste rad
+                cachedRowSet.last();
 
-            // Sender oppdatering til databasen
-            acceptChanges();
-            infoText = "Kontrakten er nå oppdatert til status: Ugyldig.";
+                // Setter nåværende nadnummer lik nederste rad
+                previousRowNumber = cachedRowSet.getRow() -1;
+                nextRowNumber = cachedRowSet.getRow() + 1;
+
+                // Henter verdier fra nåværende rad
+                refreshValues();
+            }
+        } catch (SQLException e) {
+            infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
         }
     }
 
-    // Oppdaterer kontraktens boligfelt "available" til korrekt status.
-    public void setDwellingUnitAvailability() throws SQLException {
-
-        // Oppretter kontraktens bolig
-        DwellingUnit du = new DwellingUnit();
-        du.findDwellingUnitWithID(dwellingUnitID);
-
-        if (checkValidation() && !du.getIsAvailable()) {
-            infoText = "Boligen har allerede status OPPTATT.";
-            return;
-        }
-
-        else if (checkValidation() && du.getIsAvailable()) {
-            try {
-                du.moveToCurrentRow();
-                du.updateBooleanValue("available", false);
-                du.acceptChanges();
-                infoText = "Endret status på boligen tilknyttet kontrakten til: OPPTATT";
-            }
-            catch (SQLException e) {
-                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
-            }
-            return;
-        }
-        else if (!checkValidation() && du.getIsAvailable()) {
-            infoText = "Boligen har allerede status LEDIG.";
-            return;
-        }
-        else {
-            try {
-                du.moveToCurrentRow();
-                du.updateBooleanValue("available", true);
-                du.acceptChanges();
-                infoText = "Endret status på boligen tilknyttet kontrakten til: LEDIG";
-            }
-            catch (SQLException e) {
-                infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
-            }
-        }
+    public int getTotalAmountOfRows() {
+        return totalAmountOfRows;
     }
 
     public String getInfoText() {
         return infoText;
     }
 
-    public int getCurrentRowNumber() {
-        return currentRowNumber;
+    public int getCurrentRowNumber() throws SQLException {
+        if (rowSetTypeIsFiltered)
+            return filteredRowSet.getRow();
+        else
+            return cachedRowSet.getRow();
     }
 
     public int getContractID()  {
@@ -818,11 +710,11 @@ public class Contract {
         return isSignedByBroker;
     }
 
-    public Date getInEffectDate() {
+    public Timestamp getInEffectDate() {
         return inEffectDate;
     }
 
-    public Date getExpirationDate() {
+    public Timestamp getExpirationDate() {
         return expirationDate;
     }
 

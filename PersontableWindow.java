@@ -1,6 +1,8 @@
 /**
  * Created by Carl Reinsnes.
  */
+package GUI.Files;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;

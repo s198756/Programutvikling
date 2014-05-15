@@ -1,6 +1,8 @@
 /**
  * Created by Dragon on 14.05.14.
  */
+package GUI.Files;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;

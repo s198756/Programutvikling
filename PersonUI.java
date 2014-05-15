@@ -1,16 +1,16 @@
 package GUI.Files;
 
-
 /**
  * Created by Sebastian Ramsland on 11.05.2014.
  */
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLException;
 
-public class PersonUI extends JPanel{
+public class PersonUI extends JPanel {
     JFrame personFrame;
     JLabel fullNameLabel;
     JTable contractsTable;
@@ -64,96 +64,48 @@ public class PersonUI extends JPanel{
     JCheckBox housepetsCheckBox;
     JCheckBox handicapAccommCheckBox;
     Person person;
+    Contracttable contracttable;
     boolean insertMode;
-
-    /*public static void main(String[] args) throws SQLException {
-        Person person = new Person();
-        PersonUI personPanel = new PersonUI(person);
-    }*/
+    boolean next = false;
 
     // Konstruktør som oppretter ny personliste over alle personer. Viser personen øverst på lista.
     public PersonUI() throws SQLException {
 
         // Oppretter ny personliste
         person = new Person();
+        MainPanel main = new MainPanel();
+        main.setPreferredSize(new Dimension(1280, 720));
+        add(main);
+
         try {
             // Henter verdier
             person.refreshValues();
         } catch (SQLException e) {
         }
 
-
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException ex) {
-                } catch (InstantiationException ex) {
-                } catch (IllegalAccessException ex) {
-                } catch (UnsupportedLookAndFeelException ex) {
-                }
-
-
-                personFrame = new JFrame("Person");
-                personFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                personFrame.setResizable(true);
-                personFrame.setLayout(new BorderLayout());
-                personFrame.add(new MainPanel());
-                personFrame.setPreferredSize(new Dimension(1280, 720));
-                personFrame.pack();
-
-                // Midtstiller vinduet
-                personFrame.setLocationRelativeTo(null);
-
-                personFrame.setVisible(true);
-
-                // Oppdaterer feltene
-                updateFields();
-            }
-        });
+        // Oppdaterer feltene
+        updateFields();
     }
 
     // Konstruktør som tar imot et allerede opprettet Person-objekt
     public PersonUI(Person p) {
         //
         person = p;
+        contracttable = new Contracttable();
+        contractsTable = new JTable();
+
+        MainPanel main = new MainPanel();
+        main.setPreferredSize(new Dimension(1280, 720));
+        add(main);
+
         try {
             // Henter verdier
             person.refreshValues();
         } catch (SQLException e) {
         }
 
+        updateFields();
 
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException ex) {
-                } catch (InstantiationException ex) {
-                } catch (IllegalAccessException ex) {
-                } catch (UnsupportedLookAndFeelException ex) {
-                }
-
-
-                personFrame = new JFrame("Person");
-                personFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                personFrame.setResizable(true);
-                personFrame.setLayout(new BorderLayout());
-                personFrame.add(new MainPanel());
-                personFrame.setPreferredSize(new Dimension(1280, 720));
-                personFrame.pack();
-
-                // Midtstiller vinduet
-                personFrame.setLocationRelativeTo(null);
-
-                personFrame.setVisible(true);
-
-                // Oppdaterer feltene
-                updateFields();
-            }
-        });
     }
 
     // Konstruktør som tar imot et personnummer, oppretter en ny personliste og viser denne personen først i vinduet.
@@ -162,40 +114,15 @@ public class PersonUI extends JPanel{
         // Oppretter ny personliste over alle personer og søker opp personen med det spesifiserte personnummeret
         person = new Person();
 
+
+        MainPanel main = new MainPanel();
+        main.setPreferredSize(new Dimension(1280, 720));
+        add(main);
+
         try {
             person.findPersonWithPersonNo(pNo);
         } catch (SQLException e) {
         }
-
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException ex) {
-                } catch (InstantiationException ex) {
-                } catch (IllegalAccessException ex) {
-                } catch (UnsupportedLookAndFeelException ex) {
-                }
-
-
-                personFrame = new JFrame("Person");
-                personFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                personFrame.setResizable(false);
-                personFrame.setLayout(new BorderLayout());
-                personFrame.add(new MainPanel());
-                personFrame.setPreferredSize(new Dimension(1280, 720));
-                personFrame.pack();
-
-                // Midtstiller vinduet
-                personFrame.setLocationRelativeTo(null);
-
-                personFrame.setVisible(true);
-
-                // Oppdaterer feltene
-                updateFields();
-            }
-        });
     }
 
     // Hovedpanel som samler alle underpaneler.
@@ -458,11 +385,25 @@ public class PersonUI extends JPanel{
             setBorder(BorderFactory.createTitledBorder("Kontrakter"));
             setPreferredSize(new Dimension(300, 200));
 
+                DefaultTableModel ctable = contracttable.showPersonContracts(person.getPersonNo());
+                contractsTable = new JTable(ctable) {
+                    public Class getColumnClass(int column) {
+                        for (int row = 0; row < getRowCount(); row++) {
+                            Object o = getValueAt(row, column);
+
+                            if (o != null) {
+                                return o.getClass();
+                            }
+                        }
+                        return Object.class;
+                    }
+                };
+
+
             // Viewport
             setViewportView(contractsTable);
 
             // Innhold i ContractsPanel:
-            contractsTable = new JTable();
 
             setVisible(true);
         }
@@ -476,26 +417,6 @@ public class PersonUI extends JPanel{
             setBorder(BorderFactory.createTitledBorder("Utleide boliger"));
             setPreferredSize(new Dimension(300, 200));
 
-            /*
-            // Innhold i DwellingUnitsPanel
-            Boligtabell boligtabell = new Boligtabell();
-
-            DefaultTableModel d = boligtabell.visEierensBoliger(person.getPersonNo());
-
-            Final JTable table = new JTable(d) {
-
-                for (int row = 0; row < getRowCount(); row++) {
-                    Object o = getValueAt(row, columnCount);
-                    if (o != null){
-                        return o.getClass();
-                    }
-                    return Object.class;
-                }
-
-            };
-
-            table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-            */
 
 
             // Viewport
@@ -554,6 +475,7 @@ public class PersonUI extends JPanel{
                         person.moveToCurrentRow();
                     }
                     person.nextPerson();
+                    person.refreshValues();
                     updateFields();
                 } catch (SQLException sql) {
                 }
@@ -660,6 +582,7 @@ public class PersonUI extends JPanel{
         maritalStatusComboBox.setSelectedItem(person.getMaritalStatus());
 
         infoTextLabel.setText(person.getInfoText());
+
     }
 
     // Metode som henter Personklassens infotekst og oppdaterer statusfeltet i bunnen av vinduet.

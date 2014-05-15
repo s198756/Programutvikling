@@ -8,8 +8,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLException;
+import java.util.Date;
+import java.sql.Timestamp;
+import java.text.*;
 
-public class ContractUI extends JPanel{
+public class ContractUI extends JPanel {
+
+    private static final String COULD_NOT_FIND_CONTRACT_MSG = "Kunne ikke finne kontrakten med ID: ";
+    private static final String COULD_NOT_FIND_PERSON_MSG = "Kunne ikke finne personen med det angitte personnummeret";
+    private static final String COULD_NOT_FIND_DWELLING_UNIT_MSG = "Kunne ikke finne bolig med den angitte IDen";
+    JFrame contractFrame;
     JLabel contractLabel;
     JLabel contractIDLabel;
     JLabel dwellingUnitIDLabel;
@@ -26,10 +34,10 @@ public class ContractUI extends JPanel{
     JButton searchButton;
     JButton saveButton;
     JButton cancelButton;
-    JButton closeButton;
     JButton createNewButton;
     JButton validateButton;
-    JButton deleteButton;
+    JButton bringRenterButton;
+    JButton bringDwellingUnitButton;
     JLabel infoTextLabel;
     JTextField contractIDField;
     JTextField dwellingUnitIDField;
@@ -40,7 +48,6 @@ public class ContractUI extends JPanel{
     JCheckBox signedByRenterCheckBox;
     JCheckBox signedByBrokerCheckBox;
     JCheckBox paidDepositumCheckBox;
-    JCheckBox validCheckBox;
 
     // Kontraktens bolig
     JLabel dwellingUnitTypeLabel;
@@ -85,13 +92,13 @@ public class ContractUI extends JPanel{
     // Font
     Font bold = new Font("Courier", Font.BOLD,11);
 
+    // Oppretter kontrakt, bolig og personliste.
     Contract contract;
     Person person;
     DwellingUnit dwellingUnit;
 
+    // Angir om Rowset er i en innsettingsfase av ny rad.
     boolean insertMode;
-
-
 
     // Konstruktør som oppretter lister over alle kontrakter, personer og boliger. Viser kontrakten som er øverst på lista.
     public ContractUI() throws SQLException {
@@ -110,90 +117,32 @@ public class ContractUI extends JPanel{
         } catch (SQLException e) {
         }
 
-        /*EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException ex) {
-                } catch (InstantiationException ex) {
-                } catch (IllegalAccessException ex) {
-                } catch (UnsupportedLookAndFeelException ex) {
-                }
-
-
-                /*contractFrame = new JFrame("Contract");
-                contractFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                contractFrame.setResizable(true);
-                contractFrame.setLayout(new BorderLayout());
-                contractFrame.add(new MainPanel());
-                contractFrame.setPreferredSize(new Dimension(1280, 720));
-                contractFrame.pack();
-
-                // Midtstiller vinduet
-                contractFrame.setLocationRelativeTo(null);
-
-                contractFrame.setVisible(true);
-
-                // Oppdaterer feltene
-                updateFields();
-
-                try {
-                    updateDwellingUnit();
-                    updateRenter();
-                } catch (SQLException e) {
-
-                }
-            }
-        });*/
+        // Oppdaterer alle fields/verdier
+        updateContractFields();
+        updateDwellingUnitFields();
+        updateRenterFields();
     }
 
     // Konstruktør som tar imot allerede opprettede lister.
-    public ContractUI(Contract c, Person p, DwellingUnit d) {
+    public ContractUI(Contract c, Person p, DwellingUnit d) throws SQLException {
         //
         contract = c;
         person = p;
         dwellingUnit = d;
+        MainPanel main = new MainPanel();
+        main.setPreferredSize(new Dimension(1280, 720));
+        add(main);
+
         try {
             // Henter verdier
             contract.refreshValues();
         } catch (SQLException e) {
         }
 
-        /*EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException ex) {
-                } catch (InstantiationException ex) {
-                } catch (IllegalAccessException ex) {
-                } catch (UnsupportedLookAndFeelException ex) {
-                }
-
-                contractFrame = new JFrame("Contract");
-                contractFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                contractFrame.setResizable(true);
-                contractFrame.setLayout(new BorderLayout());
-                contractFrame.add(new MainPanel());
-                contractFrame.setPreferredSize(new Dimension(1280, 720));
-                contractFrame.pack();
-
-                // Midtstiller vinduet
-                contractFrame.setLocationRelativeTo(null);
-
-                contractFrame.setVisible(true);
-
-                // Oppdaterer feltene
-                updateFields();
-                try {
-                    updateRenter();
-                    updateDwellingUnit();
-                } catch (SQLException s) {
-
-                }
-            }
-        });*/
+        // Oppdaterer alle fields/verdier
+        updateContractFields();
+        updateDwellingUnitFields();
+        updateRenterFields();
     }
 
     // Konstruktør som oppretter lister over alle kontrakter, personer og boliger.
@@ -204,48 +153,19 @@ public class ContractUI extends JPanel{
         contract = new Contract();
         person = new Person();
         dwellingUnit = new DwellingUnit();
+        MainPanel main = new MainPanel();
+        main.setPreferredSize(new Dimension(1280, 720));
+        add(main);
 
         try {
             contract.findContractWithID(cID);
         } catch (SQLException e) {
         }
 
-        /*EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException ex) {
-                } catch (InstantiationException ex) {
-                } catch (IllegalAccessException ex) {
-                } catch (UnsupportedLookAndFeelException ex) {
-                }
-
-
-                contractFrame = new JFrame("Contract");
-                contractFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                contractFrame.setResizable(false);
-                contractFrame.setLayout(new BorderLayout());
-                contractFrame.add(new MainPanel());
-                contractFrame.setPreferredSize(new Dimension(1280, 720));
-                contractFrame.pack();
-
-                // Midtstiller vinduet
-                contractFrame.setLocationRelativeTo(null);
-
-                contractFrame.setVisible(true);
-
-                // Oppdaterer feltene
-                updateFields();
-
-                try {
-                    updateDwellingUnit();
-                    updateRenter();
-                } catch (SQLException e) {
-
-                }
-            }
-        });*/
+        // Oppdaterer alle fields/verdier
+        updateContractFields();
+        updateDwellingUnitFields();
+        updateRenterFields();
     }
 
     // Hovedpanel som samler alle underpaneler.
@@ -294,14 +214,18 @@ public class ContractUI extends JPanel{
         public HeaderPanel() {
             // Headerpanel som viser fullt navn
             setPreferredSize(new Dimension(1250, 50));
+            GridLayout headerPanelLayout = new GridLayout(1, 2);
+            setLayout(headerPanelLayout);
 
             // Innhold i HeaderPanel:
             contractLabel = new JLabel();
-            contractLabel.setFont(new Font("Serif", Font.PLAIN, 30));
+            contractLabel.setFont(new Font("Serif", Font.PLAIN, 25));
+            validLabel = new JLabel();
 
             // Layout
             setLayout(new FlowLayout(FlowLayout.LEFT));
             add(contractLabel);
+            add(validLabel);
             setVisible(true);
         }
     }
@@ -331,21 +255,20 @@ public class ContractUI extends JPanel{
         public DataFieldPanel() {
             setPreferredSize(new Dimension());
             // Hovedpanel for datafeltene
-            add(new PersonaliaPanel());
-            add(new DatePanel());
-            add(new MiscPanel());
+            add(new RelationPanel());
+            add(new DetailsPanel());
 
-            GridLayout dataFieldPanelLayout = new GridLayout(3, 1);
+            GridLayout dataFieldPanelLayout = new GridLayout(2, 1);
 
             setLayout(dataFieldPanelLayout);
-            setPreferredSize(new Dimension(900, 700));
+            setPreferredSize(new Dimension(900, 300));
 
 
             setVisible(true);
         }
     }
 
-    // Sidepanel som samler sammen panelene ContractScrollPanel, DwelingUnitScrollPanel og ControlPanel.
+    // Sidepanel som samler sammen panelene ContractScrollPanel, DwellingUnitScrollPanel og ControlPanel.
     private class SidePanel extends JPanel {
         public SidePanel() {
             setPreferredSize(new Dimension(300, 600));
@@ -353,73 +276,101 @@ public class ContractUI extends JPanel{
             GridLayout sidepanelLayout = new GridLayout(3, 1);
             setLayout(sidepanelLayout);
 
-            add(new RenterScrollPanel());
             add(new DwellingUnitScrollPanel());
+            add(new RenterScrollPanel());
             add(new ControlPanel());
         }
     }
 
-    // Underpanel til DataFieldPanel. Viser personaliainformasjon.
-    private class PersonaliaPanel extends JPanel {
-        public PersonaliaPanel() {
+    // Underpanel til DataFieldPanel. Viser relasjonsinformasjon.
+    private class RelationPanel extends JPanel implements ActionListener {
+        public RelationPanel() {
             // Ramme
-            setBorder(BorderFactory.createTitledBorder("Personalia"));
+            setBorder(BorderFactory.createTitledBorder("Relasjoner"));
             setPreferredSize(new Dimension(900, 300));
             GridLayout personaliaPanelLayout = new GridLayout(4, 3);
-            personaliaPanelLayout.setHgap(50);
+            personaliaPanelLayout.setHgap(70);
+            personaliaPanelLayout.setVgap(10);
             setLayout(personaliaPanelLayout);
 
-            // Innhold i Personalia (personnummer, navn, sivilstatus, megler)
-            contractIDLabel = new JLabel("Kontrakt ID (automatisk verdi)");
+            // Relasjonsinnhold i kontrakten (leietaker, bolig, megler)
+            contractIDLabel = new JLabel("Kontrakt ID (automatisk tildelt)");
             dwellingUnitIDLabel = new JLabel("Bolig ID *");
             renterLabel = new JLabel("Personnummer Leietaker *");
             brokerLabel = new JLabel("Personnummer Megler *");
-            validLabel = new JLabel("Gyldig");
             contractIDField = new JTextField(5);
             dwellingUnitIDField = new JTextField(5);
             renterField = new JTextField(11);
             brokerField = new JTextField(11);
-            validCheckBox = new JCheckBox();
+            bringRenterButton = new JButton("Vis Person >>");
+            bringDwellingUnitButton = new JButton("Vis Bolig >>");
 
             contractIDField.setEditable(false);
 
             add(contractIDLabel);
             add(dwellingUnitIDLabel);
-            add(validLabel);
+            add(new JLabel("")); // Tom celle
 
             add(contractIDField);
             add(dwellingUnitIDField);
-            add(validCheckBox);
+            add(bringDwellingUnitButton);
 
-            add(renterLabel);
             add(brokerLabel);
-            add(new JLabel(""));
+            add(renterLabel);
+            add(new JLabel("")); // Tom celle
 
-            add(renterField);
             add(brokerField);
-            add(new JLabel(""));
+            add(renterField);
+            add(bringRenterButton);
+
+            bringRenterButton.addActionListener(this);
+            bringDwellingUnitButton.addActionListener(this);
+
+        }
+
+
+        public void actionPerformed(ActionEvent e) {
+            if (e.getSource() == bringRenterButton) {
+                try {
+                    if(!person.findPersonWithPersonNo(renterField.getText()))
+                        JOptionPane.showMessageDialog(null, COULD_NOT_FIND_PERSON_MSG);
+                    else
+                        updateRenterFields();
+                } catch (SQLException sql) {
+                }
+            } else {
+                try {
+                    if(!dwellingUnit.findDwellingUnitWithID(Integer.parseInt(dwellingUnitIDField.getText())))
+                        JOptionPane.showMessageDialog(null, COULD_NOT_FIND_DWELLING_UNIT_MSG);
+                    else
+                        updateDwellingUnitFields();
+                } catch (SQLException sql){
+                }
+            }
         }
     }
 
-    // Underpanel til DataFieldPanel. Viser kontaktinformasjon.
-    private class DatePanel extends JPanel {
-        public DatePanel() {
+    // Underpanel til DataFieldPanel. Viser kontaktdetaljer.
+    private class DetailsPanel extends JPanel {
+        public DetailsPanel() {
             // Ramme
-            setBorder(BorderFactory.createTitledBorder("Kontakt"));
+            setBorder(BorderFactory.createTitledBorder("Detaljer"));
             setPreferredSize(new Dimension(900, 500));
             GridLayout contactPanelLayout = new GridLayout(4, 3);
             contactPanelLayout.setHgap(50);
             setLayout(contactPanelLayout);
 
             // Innhold i Kontakt (telefon, email, adresse)
-            inEffectDateLabel = new JLabel("Start på kontraktperiode *");
-            expirationDateLabel = new JLabel("Slutt på kontraktperiode *");
-            signedByRenterLabel = new JLabel("Signert av leietaker *");
-            signedByBrokerLabel = new JLabel("Signert av megler *");
+            inEffectDateLabel = new JLabel("Start (åå-mm-dd) *");
+            expirationDateLabel = new JLabel("Slutt (åå-mm-dd) *");
+            signedByRenterLabel = new JLabel("Signert av leietaker");
+            signedByBrokerLabel = new JLabel("Signert av megler");
+            paidDepositumLabel = new JLabel ("Depositum innbetalt");
             inEffectDateField = new JTextField();
             expirationDateField = new JTextField();
             signedByRenterCheckBox = new JCheckBox();
             signedByBrokerCheckBox = new JCheckBox();
+            paidDepositumCheckBox = new JCheckBox();
 
             add(inEffectDateLabel);
             add(expirationDateLabel);
@@ -436,19 +387,6 @@ public class ContractUI extends JPanel{
             add(signedByRenterCheckBox);
             add(signedByBrokerCheckBox);
             add(new JLabel(""));
-        }
-    }
-
-    // Underpanel til DataFieldPanel. Viser diverse informasjon. Inntekt, røyker, husdyr osv.
-    private class MiscPanel extends JPanel {
-        public MiscPanel() {
-            // Ramme
-            setBorder(BorderFactory.createTitledBorder("Diverse"));
-            setPreferredSize(new Dimension(900, 400));
-            GridLayout contactPanelLayout = new GridLayout(4, 3);
-            setLayout(contactPanelLayout);
-
-
         }
     }
 
@@ -479,7 +417,7 @@ public class ContractUI extends JPanel{
         }
     }
 
-    // Underpanel til sidepanelet. Viser informasjon om leietaker.
+    // Underpanel til sidepanelet. Viser informasjon om kontraktens leietaker.
     private class RenterPanel extends JPanel {
         public RenterPanel() {
             // Ramme
@@ -543,7 +481,7 @@ public class ContractUI extends JPanel{
         }
     }
 
-    // Underpanel til sidepanelet. Viser informasjon om leietaker.
+    // Underpanel til sidepanelet. Viser informasjon om kontraktens bolig.
     private class DwellingUnitPanel extends JPanel {
         public DwellingUnitPanel() {
             // Ramme
@@ -611,7 +549,7 @@ public class ContractUI extends JPanel{
         }
     }
 
-    // Kontrollpanel. Tar hånd om alle knappene. Navigering, lagring, ny person etc.
+    // Kontrollpanel. Tar hånd om alle knappene. Navigering, lagring, ny kontrakt etc.
     private class ControlPanel extends JPanel implements ActionListener {
         public ControlPanel() {
             // Ramme
@@ -623,9 +561,7 @@ public class ContractUI extends JPanel{
             previousButton = new JButton("Forrige");
             saveButton = new JButton("Lagre");
             cancelButton = new JButton("Avbryt");
-            deleteButton = new JButton("Slett");
             searchButton = new JButton("Søk");
-            closeButton = new JButton("Lukk");
             createNewButton = new JButton("Ny");
             validateButton = new JButton("Validèr");
 
@@ -634,8 +570,6 @@ public class ContractUI extends JPanel{
             searchButton.addActionListener(this);
             cancelButton.addActionListener(this);
             saveButton.addActionListener(this);
-            closeButton.addActionListener(this);
-            deleteButton.addActionListener(this);
             createNewButton.addActionListener(this);
             validateButton.addActionListener(this);
 
@@ -647,10 +581,8 @@ public class ContractUI extends JPanel{
             add(searchButton);
             add(createNewButton);
             add(saveButton);
-            add(deleteButton);
             add(cancelButton);
             add(validateButton);
-            add(closeButton);
             setVisible(true);
         }
 
@@ -661,9 +593,11 @@ public class ContractUI extends JPanel{
                         contract.moveToCurrentRow();
                     }
                     contract.nextPerson();
-                    updateFields();
-                    updateRenter();
-                    updateDwellingUnit();
+                    updateContractFields();
+                    updateInfotext();
+                    updateRenterFields();
+                    updateDwellingUnitFields();
+                    System.out.println("Etter next: " + contract.getCurrentRowNumber());
                 } catch (SQLException sql) {
                 }
             } else if (e.getSource() == previousButton) {
@@ -672,16 +606,20 @@ public class ContractUI extends JPanel{
                         contract.moveToCurrentRow();
                     }
                     contract.previousPerson();
-                    updateFields();
-                    updateRenter();
-                    updateDwellingUnit();
+                    updateContractFields();
+                    updateRenterFields();
+                    updateDwellingUnitFields();
+                    System.out.println("Etter previous: " + contract.getCurrentRowNumber());
                 } catch (SQLException sql) {
                 }
             } else if (e.getSource() == searchButton) {
                 try {
-                    int identity = Integer.parseInt(JOptionPane.showInputDialog("Søk på kontrakt ID"));
-                    contract.findContractWithID(identity);
-                    updateFields();
+                    int input = Integer.parseInt(JOptionPane.showInputDialog("Søk på kontrakt ID"));
+                    if (!contract.findContractWithID(input)) {
+                        JOptionPane.showMessageDialog(null, COULD_NOT_FIND_CONTRACT_MSG + input);
+                    }
+                    updateContractFields();
+                    System.out.println("Etter søk: " + contract.getCurrentRowNumber());
                 } catch (SQLException s) {
 
                 }
@@ -691,7 +629,10 @@ public class ContractUI extends JPanel{
                         contract.moveToCurrentRow();
                     }
                     contract.cancelUpdates();
-                    updateFields();
+                    updateContractFields();
+                    updateRenterFields();
+                    updateDwellingUnitFields();
+                    updateInfotext();
                 } catch (SQLException sql) {
                 }
             } else if(e.getSource() == createNewButton) {
@@ -702,32 +643,23 @@ public class ContractUI extends JPanel{
                     updateInfotext();
                 } catch (SQLException sql) {
                 }
-            }else if(e.getSource() == deleteButton) {
-                try {
-                    contract.deleteRow();
-                    updateInfotext();
-                    contract.acceptChanges();
-                    updateFields();
-                } catch (SQLException sql) {
-                }
             } else if (e.getSource() == saveButton) {
                 try {
                     if (insertMode) {
                         saveNewContract();
                     }
                     else {
-                        updateContract();
+                        changeContract();
                     }
                 } catch (SQLException sql) {
                 }
             } else if (e.getSource() == validateButton) {
                 try {
-                    contract.setContractValidation();
-                    updateInfotext();
+                    setCorrectContractValidation();
                 } catch (SQLException sql) {
                 }
             } else {
-                setVisible(false);
+                contractFrame.setVisible(false);
             }
         }
     }
@@ -746,28 +678,43 @@ public class ContractUI extends JPanel{
         }
     }
 
-    // Metode som henter alle nødvendige get-verdier fra Kontrakt-objektet og oppdaterer tilhørende datafelt i vinduet.
-    private void updateFields() {
+    // Metode som henter alle nødvendige get-verdier fra en kontrakt og oppdaterer tilhørende datafelt i vinduet.
+    private void updateContractFields() {
+        if (contract.getIsValid()) {
+            validLabel.setText("GYLDIG");
+            validLabel.setForeground(Color.GREEN);
+        }
+        else {
+            validLabel.setText("UGYLDIG");
+            validLabel.setForeground(Color.RED);
+        }
         contractLabel.setText("Kontrakt ID: " + contract.getContractID());
         String contractID = String.valueOf(contract.getContractID());
         contractIDField.setText(contractID);
+        String dwellingUnitID = String.valueOf(contract.getDwellingUnitID());
+        dwellingUnitIDField.setText(dwellingUnitID);
         renterField.setText(contract.getRenter());
         brokerField.setText(contract.getBroker());
-        /*
-        inEffectDateField.setText(contract.getInEffectDate());
-        expirationDateField.setText(contract.getExpirationDate());
-        */
-        validCheckBox.setSelected(contract.getIsValid());
+
+        // Oppretter datoformat
+/*
+        Format date = new SimpleDateFormat("yyyy-MM-dd");
+
+        String inEffectDate = date.format(contract.getInEffectDate());
+        String expirationDate = date.format(contract.getExpirationDate());
+
+        inEffectDateField.setText(inEffectDate);
+        expirationDateField.setText(expirationDate);
+
         signedByRenterCheckBox.setSelected(contract.getIsSignedByRenter());
         signedByBrokerCheckBox.setSelected(contract.getIsSignedByBroker());
-
-        infoTextLabel.setText(contract.getInfoText());
+        */
     }
 
-    private void updateRenter() throws SQLException {
+    private void updateRenterFields() throws SQLException {
         // Henter ut informasjon om leietaker
         try {
-            person.findPersonWithPersonNo(contract.getRenter());
+            person.findPersonWithPersonNo(renterField.getText());
         } catch (SQLException s) {
         }
         renterFullNameValue.setText(person.getFullName());
@@ -780,10 +727,10 @@ public class ContractUI extends JPanel{
         renterNeedsHandicapAccommCheckBox.setSelected(person.getNeedsHandicapAccommodation());
     }
 
-    private void updateDwellingUnit() throws SQLException {
+    private void updateDwellingUnitFields() throws SQLException {
         // Henter ut informasjon om bolig
         try {
-            dwellingUnit.findDwellingUnitWithID(contract.getDwellingUnitID());
+            dwellingUnit.findDwellingUnitWithID(Integer.parseInt(dwellingUnitIDField.getText()));
         } catch (SQLException s) {
         }
         dwellingUnitStreetValue.setText(dwellingUnit.getStreet());
@@ -804,32 +751,58 @@ public class ContractUI extends JPanel{
 
     // Metode som tømmer alle datafeltene. Brukes i forbindelse med opprettelse av ny person.
     private void clearFields() {
-        contractLabel.setText("Ny kontrakt");
+
+        // Tømmer Kontraktfeltene
+        contractLabel.setText("Ny leiekontrakt");
         contractIDField.setText(null);
+        dwellingUnitIDField.setText(null);
         renterField.setText(null);
         brokerField.setText(null);
         inEffectDateField.setText(null);
         expirationDateField.setText(null);
-        validCheckBox.setSelected(false);
         signedByRenterCheckBox.setSelected(false);
         signedByBrokerCheckBox.setSelected(false);
+
+        // Tømmer Leietakerfeltene
+        renterFullNameValue.setText(null);
+        renterTelephoneNoValue.setText(null);
+        renterEmailValue.setText(null);
+        renterAnnualRevenueValue.setText(null);
+        renterHasHousepetsCheckBox.setSelected(false);
+        renterIsSmokerCheckBox.setSelected(false);
+        renterHasPassedCreditCheckBox.setSelected(false);
+        renterNeedsHandicapAccommCheckBox.setSelected(false);
+
+        //Tømmer Boligfeltene
+        dwellingUnitStreetValue.setText(null);
+        dwellingUnitStreetNoValue.setText(null);
+        dwellingUnitZipCodeValue.setText(null);
+        dwellingUnitTypeValue.setText(null);
+        dwellingUnitMonthlyPriceValue.setText(null);
+        dwellingUnitDepositumPriceValue.setText(null);
+        dwellingUnitHasElevatorCheckBox.setSelected(false);
+        dwellingUnitIsAvailableCheckBox.setSelected(false);
+        dwellingUnitHasHandicapAccommCheckBox.setSelected(false);
     }
 
     private void saveNewContract() throws SQLException {
         try {
-            // Henter ut kontrakt ID for å hente fram kontrakten etter opprettelse
-            int currentContractID = Integer.parseInt(contractIDField.getText());
-
             // Oppdaterer feltene
             contract.updateAuto("contract_id");
-            contract.updateBooleanValue("valid", validCheckBox.isSelected());
-            contract.updateIntValue("dwelling_unit_id", Integer.parseInt(dwellingUnitIDField.getText()));
+            contract.updateBooleanValue("valid", false);
+            int dwellingUnitID = Integer.parseInt(dwellingUnitIDField.getText());
+            contract.updateIntValue("dwelling_unit_id", dwellingUnitID);
             contract.updateStringValue("renter", renterField.getText());
             contract.updateStringValue("broker", renterField.getText());
+            contract.updateBooleanValue("paid_depositum", false);
             contract.updateBooleanValue("signed_by_renter", signedByRenterCheckBox.isSelected());
             contract.updateBooleanValue("signed_by_broker", signedByBrokerCheckBox.isSelected());
-            contract.updateStringValue("in_effect_date", inEffectDateField.getText());
-            contract.updateStringValue("expiration_date", expirationDateField.getText());
+
+            Timestamp inEffectDate = Timestamp.valueOf(inEffectDateField.getText() + " 00:00:00");
+            Timestamp expirationDate = Timestamp.valueOf(expirationDateField.getText() + " 00:00:00");
+
+            contract.updateTimestampValue("in_effect_date", inEffectDate);
+            contract.updateTimestampValue("expiration_date", expirationDate);
 
             // Inserter raden
             contract.insertRow();
@@ -841,56 +814,220 @@ public class ContractUI extends JPanel{
             contract.moveToCurrentRow();
 
             // Sender endringer til databasen
-            contract.acceptChanges();
+            if (!contract.acceptChanges()) {
+                JOptionPane.showMessageDialog(null, "Kunne ikke sende endringer til databasen");
+            }
 
             // Oppdaterer infotekst for å vise eventuelle statusmeldinger
             updateInfotext();
 
-            // Henter fram personen som ble opprettet
-            contract.findContractWithID(currentContractID);
+            // Henter fram nederste person
+            contract.last();
+            contract.refreshValues();
 
             // Oppdaterer infotekst for å vise eventuelle statusmeldinger
-            updateFields();
+            updateContractFields();
         }
         catch (SQLException e) {
             infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
     }
 
-    private void updateContract() throws SQLException {
+    private void changeContract() throws SQLException {
         try {
             // Flytter til nåværende rad. En forsikring i tilfelle pekeren står på en innsettingsrad.
             contract.moveToCurrentRow();
 
             // Oppdaterer feltene
-            contract.updateAuto("contract_id");
-            contract.updateBooleanValue("valid", validCheckBox.isSelected());
-            contract.updateIntValue("dwelling_unit_id", Integer.parseInt(dwellingUnitIDField.getText()));
+            int dwellingUnitID = Integer.parseInt(dwellingUnitIDField.getText());
+            contract.updateIntValue("dwelling_unit_id", dwellingUnitID);
             contract.updateStringValue("renter", renterField.getText());
-            contract.updateStringValue("broker", renterField.getText());
+            contract.updateStringValue("broker", brokerField.getText());
             contract.updateBooleanValue("signed_by_renter", signedByRenterCheckBox.isSelected());
             contract.updateBooleanValue("signed_by_broker", signedByBrokerCheckBox.isSelected());
-            contract.updateStringValue("in_effect_date", inEffectDateField.getText());
-            contract.updateStringValue("expiration_date", expirationDateField.getText());
+
+            Timestamp inEffectDate = Timestamp.valueOf(inEffectDateField.getText() + " 00:00:00");
+            Timestamp expirationDate = Timestamp.valueOf(expirationDateField.getText() + " 00:00:00");
+
+            contract.updateTimestampValue("in_effect_date", inEffectDate);
+            contract.updateTimestampValue("expiration_date", expirationDate);
 
             // Oppdaterer raden
             contract.updateRow();
+            System.out.println("Etter updaterow: " + contract.getCurrentRowNumber());
 
             // Oppdaterer infotekst for å vise eventuelle statusmeldinger
             updateInfotext();
 
             // Sender endringer til databasen
-            contract.acceptChanges();
+            if (!contract.acceptChanges()) {
+                JOptionPane.showMessageDialog(null, "Kunne ikke sende endringer til databasen");
+            }
 
             // Oppdaterer infotekst for å vise eventuelle statusmeldinger
             updateInfotext();
 
+            // Finner tilbake til kontrakten som ble lagret
+            if (!contract.findContractWithID(Integer.parseInt(contractIDField.getText()))) {
+                JOptionPane.showMessageDialog(null, COULD_NOT_FIND_CONTRACT_MSG + contractIDField.getText());
+            }
+
+            System.out.println("Etter findContractWithID: " + contract.getCurrentRowNumber());
+
             // Henter fram de nye verdiene til personen
             contract.refreshValues();
-            updateFields();
+            updateContractFields();
         }
         catch (SQLException e) {
             infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
+        }
+    }
+
+    // Returnerer "true" dersom kravene til å oppnå en gyldig kontrakt oppfylles.
+    public boolean checkValidation() throws SQLException {
+
+        // Henter ut nødvendig informasjon om kontraktens megler
+        person.findPersonWithPersonNo(contract.getBroker());
+        boolean brokerIsBroker = person.getIsBroker();
+
+        // Henter ut nødvendig informasjon om kontraktens leietaker
+        person.findPersonWithPersonNo(contract.getRenter());
+
+        // Oppretter nåværende dato
+        Date today = new java.util.Date();
+        Timestamp now = new Timestamp(today.getTime());
+
+        String validationErrorMessage;
+        String contractValid = "Kontrakten utfyller alle krav for å bli gyldig.";
+
+        if (!brokerIsBroker) {
+            validationErrorMessage = "Angitt megler i kontrakten er ingen megler.";
+            JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+
+        else if (contract.getRenter().equals(dwellingUnit.getPropertyOwner())) {
+            validationErrorMessage = "Leietakeren kan ikke leie sin egen bolig.";
+            JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+
+        else if (contract.getRenter().equals(contract.getBroker())) {
+            validationErrorMessage = "Leietakeren kan ikke være samme person som megleren.";
+            JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+
+        else if (!contract.getIsSignedByRenter()) {
+            validationErrorMessage = "Kontrakten er ikke signert av leietaker.";
+            JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+
+        else if (!contract.getIsSignedByBroker()) {
+            validationErrorMessage = "Kontrakten er ikke signert av megler.";
+            JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+
+        else if (!now.after(contract.getInEffectDate()) || !now.before(contract.getExpirationDate())) {
+            validationErrorMessage = "Dagens dato er ikke innenfor kontraktperioden.";
+            JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+
+        else {
+            infoTextLabel.setText(contractValid);
+            return true;
+        }
+    }
+
+    // Oppdaterer feltet "valid" i kontrakten til korrekt status.
+    public boolean setCorrectContractValidation() throws SQLException {
+        boolean contractCanBeSetValid = checkValidation();
+
+        if (contractCanBeSetValid) {
+            try {
+                // Oppdaterer felt
+                contract.moveToCurrentRow();
+                contract.updateBooleanValue("valid", true);
+                contract.updateRow();
+
+                // Sender oppdatering til databasen
+                contract.acceptChanges();
+                infoTextLabel.setText("Kontrakten har nå status: Gyldig.");
+
+                // Setter pekeren tilbake til kontrakten
+                if(!contract.findContractWithID(Integer.parseInt(contractIDField.getText()))) {
+                    JOptionPane.showMessageDialog(null, COULD_NOT_FIND_CONTRACT_MSG + contractIDField.getText());
+                    return false;
+                }
+
+                updateContractFields();
+
+                // Oppdaterer boligens status til "Opptatt";
+                setDwellingUnitAvailability();
+                return true;
+
+            } catch (SQLException s) {
+                infoTextLabel.setText("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                return false;
+            }
+        }
+
+        else
+        {
+            try {
+                // Oppdaterer felt
+                contract.moveToCurrentRow();
+                contract.updateBooleanValue("valid", false);
+                contract.updateRow();
+
+                // Sender oppdatering til databasen
+                contract.acceptChanges();
+                infoTextLabel.setText("Kontrakten har nå status: Ugyldig.");
+
+                // Setter pekeren tilbake til kontrakten
+                if(!contract.findContractWithID(Integer.parseInt(contractIDField.getText()))) {
+                    JOptionPane.showMessageDialog(null, COULD_NOT_FIND_CONTRACT_MSG + contractIDField.getText());
+                    return false;
+                }
+
+                updateContractFields();
+                return true;
+
+            } catch (SQLException s) {
+                infoTextLabel.setText("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
+                return false;
+            }
+        }
+    }
+
+    // Oppdaterer kontraktens boligfelt "available" til korrekt status
+    public boolean setDwellingUnitAvailability() throws SQLException {
+
+        // Finner fram til boligen som er tilknyttet kontrakten
+        if (!dwellingUnit.findDwellingUnitWithID(contract.getDwellingUnitID())) {
+            JOptionPane.showMessageDialog(null, COULD_NOT_FIND_DWELLING_UNIT_MSG);
+            return false;
+        }
+        else {
+            // Sjekker om kontrakten er gyldig
+            if (contract.getIsValid()) {
+                // Oppdaterer boligens "available"-felt til false (opptatt)
+                dwellingUnit.moveToCurrentRow();
+                dwellingUnit.updateBooleanValue("available", false);
+                dwellingUnit.updateRow();
+                dwellingUnit.acceptChanges();
+
+                // Setter peker tilbake til boligen
+                if (!dwellingUnit.findDwellingUnitWithID(contract.getDwellingUnitID())) {
+                    JOptionPane.showMessageDialog(null, COULD_NOT_FIND_DWELLING_UNIT_MSG);
+                    return false;
+                }
+            }
+            updateDwellingUnitFields();
+            return true;
         }
     }
 }

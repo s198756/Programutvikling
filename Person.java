@@ -1,3 +1,5 @@
+package GUI.Files;
+
 /**
  * Created by sebastianramsland on 30.04.14.
  */
@@ -55,7 +57,7 @@ public class Person {
     private int previousRowNumber;
 
     // Angir rowsettets antall rader
-    private int amountRows;
+    private int totalAmountOfRows;
 
     // Angir toppen av rowset
     private static final int TOP_OF_ROWSET = 1;
@@ -76,10 +78,10 @@ public class Person {
             System.exit(1);
         }
 
-        // Lager CachedRowSet av SQL-queryen
+        // Setter inn CachedRowSet fra SQL-queryen
         try {
             cachedRowSet = new CachedRowSetImpl();
-            cachedRowSet = dbInterface.getRowSet();
+            cachedRowSet = dbInterface.getCachedRowSet();
             cachedRowSet.setTableName(TABLENAME);
             int [] keys = {1, 9, 10};
             cachedRowSet.setKeyColumns(keys);
@@ -88,7 +90,7 @@ public class Person {
             cachedRowSet.last();
 
             // Henter ut antall rader
-            amountRows = cachedRowSet.getRow();
+            totalAmountOfRows = cachedRowSet.getRow();
 
             // Hopper til øverste rad
             cachedRowSet.first();
@@ -100,53 +102,46 @@ public class Person {
         }
     }
 
-    // Konstruktør som tar imot eksisterende SQLInterface, CachedRowSet og radnummer (et ufiltrert søk)
-    public Person (SQLInterface dbInt, CachedRowSetImpl crs, int rowID) throws SQLException {
+    // Konstruktør som tar imot eksisterende SQLInterface, radnummer og rowset-type. Henter fram FilteredRowSet eller CachedRowSet fra SQLInterface.
+    public Person (SQLInterface dbInt, int rowID, boolean isFiltered) throws SQLException {
         // Setter inn SQLInterface
         dbInterface = dbInt;
 
-        cachedRowSet = crs;
-        cachedRowSet.setTableName(TABLENAME);
+        if (isFiltered) {
+            filteredRowSet = dbInterface.getFilteredRowSet();
+            filteredRowSet.setTableName(TABLENAME);
+            int [] keys = {1};
+            filteredRowSet.setKeyColumns(keys);
 
-        // Hopper til nederste rad for å finne antall rader
-        cachedRowSet.last();
+            // Hopper til nederste rad for å finne antall rader
+            filteredRowSet.last();
 
-        // Henter ut antall rader
-        amountRows = cachedRowSet.getRow();
+            // Henter ut antall rader
+            totalAmountOfRows = filteredRowSet.getRow();
 
-        // Setter inn mottatt radnummer
-        currentRowNumber = rowID;
+            // Setter pekeren på radnummeret
+            jumpToPerson(rowID);
 
-        // Setter pekeren på radnummeret
-        jumpToPerson(rowID);
+            // Nåværende rowSet er av typen "Filtered"
+            rowSetTypeIsFiltered = true;
+        } else {
+            cachedRowSet = dbInterface.getCachedRowSet();
+            cachedRowSet.setTableName(TABLENAME);
+            int [] keys = {1};
+            cachedRowSet.setKeyColumns(keys);
 
-        // Nåværende rowSet er av typen "Cached"
-        rowSetTypeIsFiltered = false;
-    }
+            // Hopper til nederste rad for å finne antall rader
+            cachedRowSet.last();
 
-    // Konstruktør som tar imot eksisterende SQLInterface, FilteredRowSet og radnummer (et filtrert søk)
-    public Person (SQLInterface dbInt, FilteredRowSet frs, int rowID) throws SQLException {
-        // Setter inn SQLInterface
-        dbInterface = dbInt;
+            // Henter ut antall rader
+            totalAmountOfRows = cachedRowSet.getRow();
 
-        // Setter inn FilteredRowSet og tabellnavn
-        filteredRowSet = frs;
-        filteredRowSet.setTableName(TABLENAME);
+            // Setter pekeren på radnummeret
+            jumpToPerson(rowID);
 
-        // Hopper til nederste rad for å finne antall rader
-        cachedRowSet.last();
-
-        // Henter ut antall rader
-        amountRows = cachedRowSet.getRow();
-
-        // Setter inn mottatt radnummer
-        currentRowNumber = rowID;
-
-        // Setter pekeren på radnummeret
-        jumpToPerson(rowID);
-
-        // Nåværende rowSet er av typen "Filtered"
-        rowSetTypeIsFiltered = true;
+            // Nåværende rowSet er av typen "Cached"
+            rowSetTypeIsFiltered = false;
+        }
     }
 
     // Innlasting av person med nåværende radnummer
@@ -237,7 +232,7 @@ public class Person {
     }
 
     // Innlasting av person med et spesifisert radnummer
-    public void jumpToPerson(int rowNo) throws SQLException {
+    public boolean jumpToPerson(int rowNo) throws SQLException {
         currentRowNumber = rowNo;
         previousRowNumber -= currentRowNumber - 1;
         nextRowNumber += currentRowNumber + 1;
@@ -245,13 +240,15 @@ public class Person {
         try {
             infoText = messageJumpToPerson;
             refreshValues();
+            return true;
         } catch (SQLException e){
             infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+            return false;
         }
     }
 
     // Søk opp person med personnummer (unik verdi)
-    public void findPersonWithPersonNo(String pNo) throws SQLException {
+    public boolean findPersonWithPersonNo(String pNo) throws SQLException {
 
         String messageWhenFindPerson = "Personen ble funnet. Flytter pekeren til personen og henter verdier. \n";
         String messageWhenCouldNotFindPersonWithPersonNo = "Fant ikke personen med det angitte personnummeret. \n";
@@ -266,12 +263,14 @@ public class Person {
                     if (pNo.equals(filteredRowSet.getString("person_no"))) {
                         infoText = messageWhenFindPerson;
                         jumpToPerson(filteredRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindPersonWithPersonNo;
+                return false;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
 
@@ -285,19 +284,21 @@ public class Person {
                     if(pNo.equals(cachedRowSet.getString("person_no"))) {
                         infoText = messageWhenFindPerson;
                         jumpToPerson(cachedRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindPersonWithPersonNo;
+                return false;
 
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
 
     // Søk opp person med telefonnummer (unik verdi)
-    public void findPersonWithTelephoneNo(long telNo) throws SQLException {
+    public boolean findPersonWithTelephoneNo(long telNo) throws SQLException {
 
         String messageWhenFindPerson = "Personen ble funnet. Flytter pekeren til personen og henter verdier. \n";
         String messageWhenCouldNotFindPersonWithTelephoneNo = "Fant ikke personen med det angitte telefonnummeret. \n";
@@ -312,12 +313,14 @@ public class Person {
                     if (telNo == filteredRowSet.getLong("telephone")) {
                         infoText = messageWhenFindPerson;
                         jumpToPerson(filteredRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindPersonWithTelephoneNo;
+                return false;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
         else {
@@ -330,18 +333,20 @@ public class Person {
                     if (telNo == cachedRowSet.getLong("telephone")) {
                         infoText = messageWhenFindPerson;
                         jumpToPerson(cachedRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindPersonWithTelephoneNo;
+                return false;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
 
     // Søk opp person med mailadresse (unik verdi)
-    public void findPersonWithEMailAddress(String mail) throws SQLException {
+    public boolean findPersonWithEMailAddress(String mail) throws SQLException {
 
         String messageWhenFindPerson = "Personen ble funnet. Flytter pekeren til personen og henter verdier. \n";
         String messageWhenCouldNotFindPersonWithEmail = "Fant ikke personen med den angitte mailadressen. \n";
@@ -356,12 +361,14 @@ public class Person {
                     if(mail.equals(filteredRowSet.getString("email"))) {
                         infoText = messageWhenFindPerson;
                         jumpToPerson(filteredRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindPersonWithEmail;
+                return false;
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
         else {
@@ -374,12 +381,14 @@ public class Person {
                     if(mail.equals(cachedRowSet.getString("email"))) {
                         infoText = messageWhenFindPerson;
                         jumpToPerson(cachedRowSet.getRow());
-                        return;
+                        return true;
                     }
                 }
                 infoText = messageWhenCouldNotFindPersonWithEmail;
+                return false;
             } catch (SQLException e){
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
+                return false;
             }
         }
     }
@@ -392,7 +401,7 @@ public class Person {
 
         if (rowSetTypeIsFiltered) {
             // Sjekker om pekeren står på siste rad
-            if (filteredRowSet.getRow() == amountRows) {
+            if (filteredRowSet.getRow() == totalAmountOfRows) {
                 infoText = messageWhenLastPerson;
             }
             else {
@@ -412,7 +421,7 @@ public class Person {
         }
         else {
             // Sjekker om pekeren står på siste rad
-            if (cachedRowSet.getRow() == amountRows) {
+            if (cachedRowSet.getRow() == totalAmountOfRows) {
                 infoText = messageWhenLastPerson;
             }
             else {
@@ -708,7 +717,7 @@ public class Person {
         if (rowSetTypeIsFiltered) {
             try {
                 filteredRowSet.deleteRow();
-                amountRows -= 1;
+                totalAmountOfRows -= 1;
                 infoText = messageWhenDeleteRow;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
@@ -717,7 +726,7 @@ public class Person {
         else {
             try {
                 cachedRowSet.deleteRow();
-                amountRows -= 1;
+                totalAmountOfRows -= 1;
                 infoText = messageWhenDeleteRow;
             } catch (SQLException e) {
                 infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
@@ -726,7 +735,7 @@ public class Person {
     }
 
     // Sender de oppdaterte feltene til databasen
-    public void acceptChanges() throws SQLException {
+    public boolean acceptChanges() {
 
         String messageWhenAcceptChanges = "Alle endringer ble sendt til databasen. \n";
         String errorMessageWhenAcceptChanges = "FEIL: Kunne ikke sende endringer til databasen. \n";
@@ -734,16 +743,33 @@ public class Person {
         if (rowSetTypeIsFiltered) {
             if (dbInterface.commitToDatabase(filteredRowSet)) {
                 infoText = messageWhenAcceptChanges;
+                return true;
             } else {
                 infoText = errorMessageWhenAcceptChanges;
+                return false;
             }
         }
         else {
             if (dbInterface.commitToDatabase(cachedRowSet)) {
                 infoText = messageWhenAcceptChanges;
+                return true;
             } else {
                 infoText = errorMessageWhenAcceptChanges;
+                return false;
             }
+        }
+    }
+
+    public void last() throws SQLException {
+        try {
+            if (rowSetTypeIsFiltered) {
+                filteredRowSet.last();
+            }
+            else {
+                cachedRowSet.last();
+            }
+        } catch (SQLException e) {
+            infoText = "Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage();
         }
     }
 
