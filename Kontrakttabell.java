@@ -40,7 +40,7 @@ public class Kontrakttabell {
                 for (int i = 1; i <= numberofcolumns; i++) {
                     newrows.addElement(rs.getObject(i));
                 }
-                rows.addElement(rows);
+                rows.addElement(newrows);
             }
             rs.close();
             stmt.close();
@@ -59,7 +59,7 @@ public class Kontrakttabell {
     }
 
     public DefaultTableModel finnKontraktVedAASkriveInnBoligId(int id){
-        PreparedStatement ps = null;
+        PreparedStatement ps;
         String query = "SELECT * FROM contract WHERE dwelling_unit_id LIKE ?";
         Vector rows = new Vector();
         Vector columnnames = new Vector();
@@ -87,7 +87,7 @@ public class Kontrakttabell {
                 rows.addElement(newrows);
             }
             rs.close();
-            stmt.close();
+            ps.close();
             con.close();
 
         }catch(SQLException sqle){
@@ -103,7 +103,7 @@ public class Kontrakttabell {
     }
 
     public DefaultTableModel visPersonensKontrakter(String pNo){
-        PreparedStatement ps = null;
+        PreparedStatement ps;
         String query = "SELECT contract_id, valid, in_effect_date, expiration_date FROM contract WHERE broker LIKE ? OR renter LIKE ?";
         Vector rows = new Vector();
         Vector columnnames = new Vector();

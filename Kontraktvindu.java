@@ -1,6 +1,7 @@
-
+/**
+ * Created by Dragon on 14.05.14.
+ */
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -8,18 +9,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.sql.SQLException;
 
-/**
- * Programmert av Carl P Reinsnes, s198756
- */
-public class Boligvindu extends JFrame implements ActionListener{
-    Boligtabell t;                      //Et objekt av boligtabellen
+public class Kontraktvindu extends JFrame implements ActionListener{
+    Kontrakttabell k;                      //Et objekt av boligtabellen
 
-    DwellingUnit dwelling;               //objekt av DwellingUnit-klassen: denne klassen inneholder en metode for å opprette og fylle et Cachedrowset
-                                        //med databaseverdier på bakgrunn av en eksisterende bolig i databasen. ved opprettelse blir den unike id-en sendt
-                                        //med, og det er dette som oppretter objektet. DwellingUnit inneholder oppdateringsmetoder, men man MÅ kalle startQuery() for å
-                                        //kunne unngå nullpointerexception. Inneholder også get-metoder for alle databaseverdier.
+    Contract contract;               //objekt av DwellingUnit-klassen: denne klassen inneholder en metode for å opprette og fylle et Cachedrowset
+    //med databaseverdier på bakgrunn av en eksisterende bolig i databasen. ved opprettelse blir den unike id-en sendt
+    //med, og det er dette som oppretter objektet. DwellingUnit inneholder oppdateringsmetoder, men man MÅ kalle startQuery() for å
+    //kunne unngå nullpointerexception. Inneholder også get-metoder for alle databaseverdier.
 
-    JButton lukk;                    //Knapp for å lukke vinduet
     JButton visAlle;                    //Knapp for å vise alle boliger i databasen
     JButton search;                     //Knapp for å søke etter en eller flere boliger i tabellen
     JTextArea output;                   //utskriftsområde for søk etter id
@@ -28,33 +25,32 @@ public class Boligvindu extends JFrame implements ActionListener{
     JPanel tablepanel;                  //JPanel for tabellen i bunnen
 
     //Nedenfor er opprettelsen av panelet, og alt som hører til
-    public Boligvindu(){
-        JFrame boligvindu = new JFrame();
-        boligvindu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        boligvindu.setResizable(true);
-        boligvindu.setLayout(new BorderLayout());
-        boligvindu.setPreferredSize(new Dimension(1280, 720));
-        boligvindu.pack();
-        boligvindu.setVisible(true);
+    public Kontraktvindu(){
+        JFrame kontraktvindu = new JFrame();
+        kontraktvindu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        kontraktvindu.setResizable(true);
+        kontraktvindu.setLayout(new BorderLayout());
+        kontraktvindu.setPreferredSize(new Dimension(1280, 720));
+        kontraktvindu.pack();
+        kontraktvindu.setVisible(true);
 
-        boligvindu.add(new JScrollPane(output), BorderLayout.SOUTH);
-        t = new Boligtabell();
-        dwelling = new DwellingUnit();
-        lukk = new JButton("Lukk vindu");
-        visAlle = new JButton("Vis alle boliger");
+        kontraktvindu.add(new JScrollPane(output), BorderLayout.SOUTH);
+        k = new Kontrakttabell();
+        contract = new Contract();
+        visAlle = new JButton("Vis alle kontrakter");
         search = new JButton("Søk");
         output = new JTextArea(20, 20);
-        lukk.addActionListener(this);
         visAlle.addActionListener(this);
         search.addActionListener(this);
         buttonpanel = new JPanel();
         tablepanel = new JPanel();
         tablepanel.setLayout(new BorderLayout());
+        tablepanel.setPreferredSize(new Dimension(300, 300));
         outputpanel = new JPanel();
 
-        boligvindu.add(buttonpanel, BorderLayout.PAGE_START);              //de forskjellige panelene legges til forskjellige deler av
-        boligvindu.add(outputpanel, BorderLayout.LINE_END);                //det ytre panelet og får faste plasser ed borderlayout
-        boligvindu.add(tablepanel, BorderLayout.CENTER);
+        kontraktvindu.add(buttonpanel, BorderLayout.PAGE_START);              //de forskjellige panelene legges til forskjellige deler av
+        kontraktvindu.add(outputpanel, BorderLayout.LINE_END);                //det ytre panelet og får faste plasser ed borderlayout
+        kontraktvindu.add(tablepanel, BorderLayout.CENTER);
         buttonpanel.add(visAlle);
         buttonpanel.add(search);
         outputpanel.add(output, BorderLayout.LINE_END);
@@ -64,16 +60,17 @@ public class Boligvindu extends JFrame implements ActionListener{
     //Lytteklasse for panelet
     public void actionPerformed(ActionEvent e){
         if(e.getSource() == visAlle){
-            DefaultTableModel alt = t.visAltIBoligtabellen();
+            DefaultTableModel alt = k.visAltIKontrakttabellen();
             visTabell(alt);
         }
         else if(e.getSource() == search){
-            String choices[] = {"Adresse"};
+            String choices[] = {"Bolig-ID"};
             int nr = JOptionPane.showOptionDialog(null, "Hva vil du søke med?", "Boligsøking", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, choices, choices[0]);
 
             if(nr == 0){
-                String adresse = JOptionPane.showInputDialog(null, "Skriv inn gatenavn: ");
-                DefaultTableModel adr = t.finnBoligVedAASkriveInnAdresse(adresse);
+                String adresse = JOptionPane.showInputDialog(null, "Skriv inn bolig-ID: ");
+                int id = Integer.parseInt(adresse);
+                DefaultTableModel adr = k.finnKontraktVedAASkriveInnBoligId(id);
                 visTabell(adr);
             }
         }
@@ -94,8 +91,8 @@ public class Boligvindu extends JFrame implements ActionListener{
                     }
                 }
                 return Object.class;
-                }
-            };
+            }
+        };
         table.setModel(def);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -107,21 +104,21 @@ public class Boligvindu extends JFrame implements ActionListener{
                     int row = target.getSelectedRow();
                     int column = 0;
 
-                        Object identity = target.getValueAt(row, column);
-                        int id = (Integer)identity;
+                    Object identity = target.getValueAt(row, column);
+                    int id = (Integer)identity;
 
                     try {
-                        dwelling.findDwellingUnitWithID(id);
+                        contract.findContractWithID(id);
                     } catch (SQLException e1) {
                         e1.printStackTrace();
                     }
 
 
-                    String info = "Bolig-ID: " + dwelling.getDwellingUnitID() + "\nEier: " + dwelling.getPropertyOwner() +
-                                "\nBoligtype: " + dwelling.getDwellingType() + "\nStørrelse: " + dwelling.getSize() + " kvadratmeter" +
-                                "\nAdresse: " + dwelling.getStreet() + " " + dwelling.getStreetNo() +
-                                "\nMånedlig leie: " + dwelling.getMonthlyPrice() + "\nDepositum: " + dwelling.getDepositumPrice() + "\nPostnummer: " + dwelling.getZipCode() +
-                                "\nPoststed: " + dwelling.getArea() + "\nKommune: " + dwelling.getTownship() + "\nFylke: " + dwelling.getCounty();
+                    String info = "Kontrakt-ID: " + contract.getContractID() + "\nBolig-ID: " + contract.getDwellingUnitID() +
+                            "\nLeietaker: " + contract.getRenter() + "\nMegler: " + contract.getBroker() +
+                            "\nOpprettet: " + contract.getCreatedDate() +
+                            "\nGyldig til: " + contract.getExpirationDate();
+
 
                     output.setText(info);
 
@@ -137,7 +134,7 @@ public class Boligvindu extends JFrame implements ActionListener{
     }
 
     public static void main(String[]args){
-        Boligvindu boligvindu = new Boligvindu();
-
+        Kontraktvindu vindu = new Kontraktvindu();
     }
 }
+

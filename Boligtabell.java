@@ -22,7 +22,7 @@ public class Boligtabell {
     public DefaultTableModel visAltIBoligtabellen() {
         //Denne metoden returnerer en DefaultTableModel som blir sendt til boligvinduet og oppretter et JTable når man trykker på 'Vis alle boliger'
 
-        String query = "SELECT dwelling_unit_id, available, property_owner, dwelling_type, size, street, street_no, zip_code, monthly_price, depositum, incl_warmup, incl_warmwater, incl_internet, incl_tv, incl_electricity, incl_furniture, incl_elec_appliance, allow_housepets, allow_smokers, property_size, amount_bedroom, amount_bathroom, amount_terrace, amount_balcony, amount_private_parking, elevator, handicap_accomm, created, last_modified FROM dwelling_unit";       //SQL-query
+        String query = "SELECT dwelling_unit_id, available, property_owner, dwelling_type, size, street, street_no, zip_code, monthly_price, depositum, incl_warmup, incl_warmwater, incl_internet, incl_tv, incl_electricity, incl_furniture, incl_elec_appliance, allow_housepets, allow_smokers, created FROM dwelling_unit";       //SQL-query
 
         Vector columnnames = new Vector();                  //Vector for kolonnene
         Vector rows = new Vector();                         //Vector for radene
@@ -65,8 +65,8 @@ public class Boligtabell {
     public DefaultTableModel finnBoligVedAASkriveInnAdresse(String adresse){
         //stort sett lik visAltIBoligTabellen, bortsett fra at vi søker etter en spesifikk adresse, og dermed må vi sende med denne adressen i metodekallet.
 
-        PreparedStatement ps = null;                                                //PreparedStatement gir muligheten til å kunne spesifisere søkeelement(er)
-        String query = "SELECT * FROM dwelling_unit WHERE street LIKE ?";           //SQL-query der ? er hvor vi skal sette inn adressen
+        PreparedStatement ps;                                                //PreparedStatement gir muligheten til å kunne spesifisere søkeelement(er)
+        String query = "SELECT dwelling_unit_id, available, property_owner, dwelling_type, size, street, street_no, zip_code, monthly_price, depositum, incl_warmup, incl_warmwater, incl_internet, incl_tv, incl_electricity, incl_furniture, incl_elec_appliance, allow_housepets, allow_smokers, created FROM dwelling_unit WHERE street LIKE ?";           //SQL-query der ? er hvor vi skal sette inn adressen
         Vector rows = new Vector();                                                 //oppretter to Vectorer for rader
         Vector columnnames = new Vector();                                          //og kolonner
 
