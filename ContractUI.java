@@ -1,5 +1,3 @@
-package GUI.Files;
-
 /**
  * Created by Sebastian Ramsland on 13.05.2014.
  */
@@ -108,13 +106,14 @@ public class ContractUI extends JPanel {
         person = new Person();
         dwellingUnit = new DwellingUnit();
         MainPanel main = new MainPanel();
-        main.setPreferredSize(new Dimension(1280, 720));
+        main.setPreferredSize(new Dimension(1280, 670));
         add(main);
 
         try {
             // Henter verdier
             contract.refreshValues();
         } catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
 
         // Oppdaterer alle fields/verdier
@@ -130,13 +129,14 @@ public class ContractUI extends JPanel {
         person = p;
         dwellingUnit = d;
         MainPanel main = new MainPanel();
-        main.setPreferredSize(new Dimension(1280, 720));
+        main.setPreferredSize(new Dimension(1280, 670));
         add(main);
 
         try {
             // Henter verdier
             contract.refreshValues();
         } catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
 
         // Oppdaterer alle fields/verdier
@@ -154,12 +154,13 @@ public class ContractUI extends JPanel {
         person = new Person();
         dwellingUnit = new DwellingUnit();
         MainPanel main = new MainPanel();
-        main.setPreferredSize(new Dimension(1280, 720));
+        main.setPreferredSize(new Dimension(1280, 670));
         add(main);
 
         try {
             contract.findContractWithID(cID);
         } catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
 
         // Oppdaterer alle fields/verdier
@@ -234,7 +235,7 @@ public class ContractUI extends JPanel {
     private class DataFieldScrollPanel extends JScrollPane {
         DataFieldScrollPanel() {
             // Scrollpanel container for personfelt
-            setPreferredSize(new Dimension(950, 600));
+            setPreferredSize(new Dimension(950, 550));
 
             // Ramme
             setBorder(BorderFactory.createTitledBorder("Informasjon"));
@@ -257,13 +258,8 @@ public class ContractUI extends JPanel {
             // Hovedpanel for datafeltene
             add(new RelationPanel());
             add(new DetailsPanel());
-
             GridLayout dataFieldPanelLayout = new GridLayout(2, 1);
-
             setLayout(dataFieldPanelLayout);
-            setPreferredSize(new Dimension(900, 300));
-
-
             setVisible(true);
         }
     }
@@ -271,7 +267,7 @@ public class ContractUI extends JPanel {
     // Sidepanel som samler sammen panelene ContractScrollPanel, DwellingUnitScrollPanel og ControlPanel.
     private class SidePanel extends JPanel {
         public SidePanel() {
-            setPreferredSize(new Dimension(300, 600));
+            setPreferredSize(new Dimension(300, 550));
 
             GridLayout sidepanelLayout = new GridLayout(3, 1);
             setLayout(sidepanelLayout);
@@ -336,7 +332,8 @@ public class ContractUI extends JPanel {
                         JOptionPane.showMessageDialog(null, COULD_NOT_FIND_PERSON_MSG);
                     else
                         updateRenterFields();
-                } catch (SQLException sql) {
+                } catch (SQLException a) {
+                    infoTextLabel.setText("Error code: " + a.getErrorCode() + "\tLocalizedMessage: " + a.getLocalizedMessage());
                 }
             } else {
                 try {
@@ -344,7 +341,8 @@ public class ContractUI extends JPanel {
                         JOptionPane.showMessageDialog(null, COULD_NOT_FIND_DWELLING_UNIT_MSG);
                     else
                         updateDwellingUnitFields();
-                } catch (SQLException sql){
+                } catch (SQLException b){
+                    infoTextLabel.setText("Error code: " + b.getErrorCode() + "\tLocalizedMessage: " + b.getLocalizedMessage());
                 }
             }
         }
@@ -599,6 +597,7 @@ public class ContractUI extends JPanel {
                     updateDwellingUnitFields();
                     System.out.println("Etter next: " + contract.getCurrentRowNumber());
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == previousButton) {
                 try {
@@ -611,6 +610,7 @@ public class ContractUI extends JPanel {
                     updateDwellingUnitFields();
                     System.out.println("Etter previous: " + contract.getCurrentRowNumber());
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == searchButton) {
                 try {
@@ -620,8 +620,8 @@ public class ContractUI extends JPanel {
                     }
                     updateContractFields();
                     System.out.println("Etter søk: " + contract.getCurrentRowNumber());
-                } catch (SQLException s) {
-
+                } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == cancelButton) {
                 try {
@@ -634,6 +634,7 @@ public class ContractUI extends JPanel {
                     updateDwellingUnitFields();
                     updateInfotext();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if(e.getSource() == createNewButton) {
                 try {
@@ -642,6 +643,7 @@ public class ContractUI extends JPanel {
                     contract.moveToInsertRow();
                     updateInfotext();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == saveButton) {
                 try {
@@ -652,11 +654,13 @@ public class ContractUI extends JPanel {
                         changeContract();
                     }
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == validateButton) {
                 try {
                     setCorrectContractValidation();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else {
                 contractFrame.setVisible(false);
@@ -716,6 +720,7 @@ public class ContractUI extends JPanel {
         try {
             person.findPersonWithPersonNo(renterField.getText());
         } catch (SQLException s) {
+            infoTextLabel.setText("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
         }
         renterFullNameValue.setText(person.getFullName());
         renterTelephoneNoValue.setText(String.valueOf(person.getTelephoneNo()));
@@ -732,6 +737,7 @@ public class ContractUI extends JPanel {
         try {
             dwellingUnit.findDwellingUnitWithID(Integer.parseInt(dwellingUnitIDField.getText()));
         } catch (SQLException s) {
+            infoTextLabel.setText("Error code: " + s.getErrorCode() + "\tLocalizedMessage: " + s.getLocalizedMessage());
         }
         dwellingUnitStreetValue.setText(dwellingUnit.getStreet());
         dwellingUnitStreetNoValue.setText(dwellingUnit.getStreetNo());
@@ -890,8 +896,11 @@ public class ContractUI extends JPanel {
         person.findPersonWithPersonNo(contract.getBroker());
         boolean brokerIsBroker = person.getIsBroker();
 
-        // Henter ut nødvendig informasjon om kontraktens leietaker
+        // Setter person-pekeren på kontraktens leietaker
         person.findPersonWithPersonNo(contract.getRenter());
+
+        // Henter informasjon fra leietakeren
+        person.refreshValues();
 
         // Oppretter nåværende dato
         Date today = new java.util.Date();
@@ -900,42 +909,41 @@ public class ContractUI extends JPanel {
         String validationErrorMessage;
         String contractValid = "Kontrakten utfyller alle krav for å bli gyldig.";
 
-        if (!brokerIsBroker) {
+        if (!person.getHasPassedCreditCheck()) {
+            validationErrorMessage = "Leietaker har ikke bestått kredittsjekk.";
+            JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+        else if (!brokerIsBroker) {
             validationErrorMessage = "Angitt megler i kontrakten er ingen megler.";
             JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
             return false;
         }
-
         else if (contract.getRenter().equals(dwellingUnit.getPropertyOwner())) {
             validationErrorMessage = "Leietakeren kan ikke leie sin egen bolig.";
             JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
             return false;
         }
-
         else if (contract.getRenter().equals(contract.getBroker())) {
             validationErrorMessage = "Leietakeren kan ikke være samme person som megleren.";
             JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
             return false;
         }
-
         else if (!contract.getIsSignedByRenter()) {
             validationErrorMessage = "Kontrakten er ikke signert av leietaker.";
             JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
             return false;
         }
-
         else if (!contract.getIsSignedByBroker()) {
             validationErrorMessage = "Kontrakten er ikke signert av megler.";
             JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
             return false;
         }
-
         else if (!now.after(contract.getInEffectDate()) || !now.before(contract.getExpirationDate())) {
             validationErrorMessage = "Dagens dato er ikke innenfor kontraktperioden.";
             JOptionPane.showMessageDialog(null, validationErrorMessage, "Valideringsfeil", JOptionPane.INFORMATION_MESSAGE);
             return false;
         }
-
         else {
             infoTextLabel.setText(contractValid);
             return true;

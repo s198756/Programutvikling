@@ -1,13 +1,9 @@
-package GUI.Files;
-
 /**
  * Created by Sebastian Ramsland on 01.05.2014.
  */
 
 import com.sun.rowset.CachedRowSetImpl;
 import com.sun.rowset.FilteredRowSetImpl;
-
-import javax.sql.rowset.FilteredRowSet;
 import java.sql.*;
 import java.sql.Date;
 
@@ -36,7 +32,7 @@ public class Contract {
     private SQLInterface dbInterface;
 
     // Initialiserer FilteredRowSet
-    private FilteredRowSet filteredRowSet;
+    private FilteredRowSetImpl filteredRowSet;
 
     // Initialiserer CachedRowSet
     private CachedRowSetImpl cachedRowSet;

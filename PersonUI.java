@@ -1,5 +1,3 @@
-package GUI.Files;
-
 /**
  * Created by Sebastian Ramsland on 11.05.2014.
  */
@@ -73,14 +71,18 @@ public class PersonUI extends JPanel {
 
         // Oppretter ny personliste
         person = new Person();
+        contracttable = new Contracttable();
+        contractsTable = new JTable();
+
         MainPanel main = new MainPanel();
-        main.setPreferredSize(new Dimension(1280, 720));
+        main.setPreferredSize(new Dimension(1280, 670));
         add(main);
 
         try {
             // Henter verdier
             person.refreshValues();
         } catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
 
         // Oppdaterer feltene
@@ -95,13 +97,14 @@ public class PersonUI extends JPanel {
         contractsTable = new JTable();
 
         MainPanel main = new MainPanel();
-        main.setPreferredSize(new Dimension(1280, 720));
+        main.setPreferredSize(new Dimension(1280, 670));
         add(main);
 
         try {
             // Henter verdier
             person.refreshValues();
         } catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
 
         updateFields();
@@ -122,6 +125,7 @@ public class PersonUI extends JPanel {
         try {
             person.findPersonWithPersonNo(pNo);
         } catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
     }
 
@@ -171,10 +175,12 @@ public class PersonUI extends JPanel {
         public HeaderPanel() {
             // Headerpanel som viser fullt navn
             setPreferredSize(new Dimension(1250, 50));
+            GridLayout headerPanelLayout = new GridLayout(1, 1);
+            setLayout(headerPanelLayout);
 
             // Innhold i HeaderPanel:
             fullNameLabel = new JLabel();
-            fullNameLabel.setFont(new Font("Serif", Font.PLAIN, 30));
+            fullNameLabel.setFont(new Font("Serif", Font.PLAIN, 25));
 
             // Layout
             setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -187,7 +193,7 @@ public class PersonUI extends JPanel {
     private class DataFieldScrollPanel extends JScrollPane {
         DataFieldScrollPanel() {
             // Scrollpanel container for personfelt
-            setPreferredSize(new Dimension(950, 600));
+            setPreferredSize(new Dimension(950, 550));
 
             // Ramme
             setBorder(BorderFactory.createTitledBorder("Informasjon"));
@@ -225,7 +231,7 @@ public class PersonUI extends JPanel {
     // Sidepanel som samler sammen panelene ContractScrollPanel, DwelingUnitScrollPanel og ControlPanel.
     private class SidePanel extends JPanel {
         public SidePanel() {
-            setPreferredSize(new Dimension(300, 600));
+            setPreferredSize(new Dimension(300, 550));
 
             GridLayout sidepanelLayout = new GridLayout(3, 1);
             setLayout(sidepanelLayout);
@@ -478,6 +484,7 @@ public class PersonUI extends JPanel {
                     person.refreshValues();
                     updateFields();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == previousButton) {
                 try {
@@ -487,6 +494,7 @@ public class PersonUI extends JPanel {
                     person.previousPerson();
                     updateFields();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == searchButton) {
                 try {
@@ -496,8 +504,8 @@ public class PersonUI extends JPanel {
                         person.findPersonWithPersonNo(input);
                         updateFields();
                     }
-                } catch (SQLException s) {
-
+                } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == cancelButton) {
                 try {
@@ -507,6 +515,7 @@ public class PersonUI extends JPanel {
                     person.cancelUpdates();
                     updateFields();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if(e.getSource() == createNewButton) {
                 try {
@@ -515,6 +524,7 @@ public class PersonUI extends JPanel {
                     person.moveToInsertRow();
                     updateInfotext();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             }else if(e.getSource() == deleteButton) {
                 try {
@@ -523,6 +533,7 @@ public class PersonUI extends JPanel {
                     person.acceptChanges();
                     updateFields();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == saveButton) {
                 try {
@@ -533,6 +544,7 @@ public class PersonUI extends JPanel {
                         updatePerson();
                     }
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else {
                 personFrame.setVisible(false);

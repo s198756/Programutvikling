@@ -1,7 +1,6 @@
 /**
  * Created by Dragon on 14.05.14.
  */
-package GUI.Files;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -11,73 +10,79 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.sql.SQLException;
 
-public class ContracttableWindow extends JFrame implements ActionListener{
-    Contracttable c;                      //Et objekt av boligtabellen
+public class ContracttableWindow extends JPanel {
+    Contracttable c;                      // Et objekt av boligtabellen
 
-    Contract contract;               //objekt av Contract-klassen: denne klassen inneholder en metode for å opprette
-                                    // og fylle et Cachedrowset med databaseverdier på bakgrunn av en eksisterende
-                                    // kontrakt i databasen. ved opprettelse blir den unike id-en sendt
-                                    //med, og det er dette som oppretter objektet. Contract inneholder
-                                    // oppdateringsmetoder, og også get-metoder for alle databaseverdier.
+    Contract contract;                    // objekt av Contract-klassen: denne klassen inneholder en metode for å opprette
+                                          // og fylle et Cachedrowset med databaseverdier på bakgrunn av en eksisterende
+                                          // kontrakt i databasen. ved opprettelse blir den unike id-en sendt
+                                          // med, og det er dette som oppretter objektet. Contract inneholder
+                                          // oppdateringsmetoder, og også get-metoder for alle databaseverdier.
 
-    JButton visAlle;                    //Knapp for å vise alle kontrakter i databasen
-    JButton search;                     //Knapp for å søke etter kontrakter i tabellen
-    JTextArea output;                   //utskriftsområde for muselytter
-    JPanel buttonpanel;                 //Jpanel for øverste del av det ytre JPanel
-    JPanel outputpanel;                 //outputpanel for utskriftsområdet
-    JPanel tablepanel;                  //JPanel for tabellen i bunnen
+    JButton visAlle;                      // Knapp for å vise alle kontrakter i databasen
+    JButton search;                       // Knapp for å søke etter kontrakter i tabellen
+    JTextArea output;                     // utskriftsområde for muselytter
+    JPanel buttonpanel;                   // Jpanel for øverste del av det ytre JPanel
+    JPanel outputpanel;                   // outputpanel for utskriftsområdet
+    JPanel tablepanel;                    // JPanel for tabellen i bunnen
 
     //Nedenfor er opprettelsen av panelet, og alt som hører til
     public ContracttableWindow(){
-        JFrame kontraktvindu = new JFrame();
-        kontraktvindu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        kontraktvindu.setResizable(true);
-        kontraktvindu.setLayout(new BorderLayout());
-        kontraktvindu.setPreferredSize(new Dimension(1280, 720));
-        kontraktvindu.pack();
-        kontraktvindu.setVisible(true);
-
-        kontraktvindu.add(new JScrollPane(output), BorderLayout.SOUTH);
-        c = new Contracttable();
-        contract = new Contract();
-        visAlle = new JButton("Vis alle kontrakter");
-        search = new JButton("Søk");
-        output = new JTextArea(20, 20);
-        visAlle.addActionListener(this);
-        search.addActionListener(this);
-        buttonpanel = new JPanel();
-        tablepanel = new JPanel();
-        tablepanel.setLayout(new BorderLayout());
-        tablepanel.setPreferredSize(new Dimension(300, 300));
-        outputpanel = new JPanel();
-
-        kontraktvindu.add(buttonpanel, BorderLayout.PAGE_START);              //de forskjellige panelene legges til
-                                                                              // forskjellige deler av
-        kontraktvindu.add(outputpanel, BorderLayout.LINE_END);                //det ytre panelet og får faste plasser
-                                                                             // med borderlayout
-        kontraktvindu.add(tablepanel, BorderLayout.CENTER);
-        buttonpanel.add(visAlle);
-        buttonpanel.add(search);
-        outputpanel.add(output, BorderLayout.LINE_END);
-
+        MainPanel main = new MainPanel();
+        main.setPreferredSize(new Dimension(1280, 670));
+        add(main);
     }
 
-    //Lytteklasse for panelet
-    public void actionPerformed(ActionEvent e){
-        if(e.getSource() == visAlle){
-            DefaultTableModel alt = c.showEverythingInContracttable();
-            showTable(alt);
-        }
-        else if(e.getSource() == search){
-            String choices[] = {"Bolig-ID"};
-            int nr = JOptionPane.showOptionDialog(null, "Hva vil du søke med?", "Boligsøking",
-                    JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, choices, choices[0]);
+    // Hovedpanel som samler alle underpaneler.
+    private class MainPanel extends JPanel implements ActionListener {
+        public MainPanel() {
+            setPreferredSize(new Dimension(1100, 600));
+            setVisible(true);
 
-            if(nr == 0){
-                String adresse = JOptionPane.showInputDialog(null, "Skriv inn bolig-ID: ");
-                int id = Integer.parseInt(adresse);
-                DefaultTableModel adr = c.findContractByDwellingUnit(id);
-                showTable(adr);
+            setLayout(new BorderLayout());
+            setPreferredSize(new Dimension(1280, 720));
+            setVisible(true);
+            add(new JScrollPane(output), BorderLayout.SOUTH);
+            c = new Contracttable();
+            contract = new Contract();
+            visAlle = new JButton("Vis alle kontrakter");
+            search = new JButton("Søk");
+            output = new JTextArea(20, 20);
+            visAlle.addActionListener(this);
+            search.addActionListener(this);
+            buttonpanel = new JPanel();
+            tablepanel = new JPanel();
+            tablepanel.setLayout(new BorderLayout());
+            tablepanel.setPreferredSize(new Dimension(300, 300));
+            outputpanel = new JPanel();
+
+            add(buttonpanel, BorderLayout.PAGE_START);              // de forskjellige panelene legges til
+            // forskjellige deler av
+            add(outputpanel, BorderLayout.LINE_END);                // det ytre panelet og får faste plasser
+            // med borderlayout
+            add(tablepanel, BorderLayout.CENTER);
+            buttonpanel.add(visAlle);
+            buttonpanel.add(search);
+            outputpanel.add(output, BorderLayout.LINE_END);
+        }
+
+        //Lytteklasse for panelet
+        public void actionPerformed(ActionEvent e){
+            if(e.getSource() == visAlle){
+                DefaultTableModel alt = c.showEverythingInContracttable();
+                showTable(alt);
+            }
+            else if(e.getSource() == search){
+                String choices[] = {"Bolig-ID"};
+                int nr = JOptionPane.showOptionDialog(null, "Hva vil du søke med?", "Boligsøking",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, choices, choices[0]);
+
+                if(nr == 0){
+                    String adresse = JOptionPane.showInputDialog(null, "Skriv inn bolig-ID: ");
+                    int id = Integer.parseInt(adresse);
+                    DefaultTableModel adr = c.findContractByDwellingUnit(id);
+                    showTable(adr);
+                }
             }
         }
     }
@@ -144,9 +149,4 @@ public class ContracttableWindow extends JFrame implements ActionListener{
         tablepanel.revalidate();                    //revaliderer tabellen
         tablepanel.repaint();                       //gjør tabellen mindre klikk-sensitiv
     }
-
-    public static void main(String[]args){
-        ContracttableWindow vindu = new ContracttableWindow();
-    }
 }
-

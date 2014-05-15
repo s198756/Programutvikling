@@ -1,5 +1,3 @@
-
-package GUI.Files;
 /**
  * Programmert av Carl Reinsnes
  */
@@ -75,7 +73,7 @@ public class Persontable {
 
         PreparedStatement ps;
         String query = "SELECT person_no, is_broker, firstname, middlename, surname, street, street_no, zip_code, " +
-                        "telephone, email FROM persons WHERE surname LIKE ?";
+                        "telephone, email FROM person WHERE surname LIKE ?";
         Vector columnnames = new Vector();
         Vector rows = new Vector();
 

@@ -1,11 +1,9 @@
-package GUI.Files;
-
 /**
  * Created by Sebastian Ramsland on 30.04.2014.
  */
 
 import com.sun.rowset.CachedRowSetImpl;
-import javax.sql.rowset.FilteredRowSet;
+import com.sun.rowset.FilteredRowSetImpl;
 import java.sql.*;
 
 public class DwellingUnit {
@@ -60,7 +58,7 @@ public class DwellingUnit {
     private SQLInterface dbInterface;
 
     // Initialiserer FilteredRowSet
-    private FilteredRowSet filteredRowSet;
+    private FilteredRowSetImpl filteredRowSet;
 
     // Initialiserer CachedRowSet
     private CachedRowSetImpl cachedRowSet;

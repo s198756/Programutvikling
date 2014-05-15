@@ -1,5 +1,3 @@
-package GUI.Files;
-
 /**
  * Created by Sebastian Ramsland on 09.05.2014.
  */

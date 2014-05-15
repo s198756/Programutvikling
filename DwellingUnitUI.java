@@ -1,12 +1,7 @@
-package GUI.Files;
-
 /**
  * Created by Dragon on 13.05.14.
  */
 
-
-import com.sun.rowset.CachedRowSetImpl;
-import javax.sql.rowset.FilteredRowSet;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -100,13 +95,14 @@ public class DwellingUnitUI extends JPanel {
         dwellingUnit = new DwellingUnit();
 
         MainPanel main = new MainPanel();
-        main.setPreferredSize(new Dimension(1280, 720));
+        main.setPreferredSize(new Dimension(1280, 670));
         add(main);
 
         try {
             // Henter verdier
             dwellingUnit.refreshValues();
         } catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
 
         // Oppdaterer feltene
@@ -119,13 +115,14 @@ public class DwellingUnitUI extends JPanel {
         dwellingUnit = d;
 
         MainPanel main = new MainPanel();
-        main.setPreferredSize(new Dimension(1280, 720));
+        main.setPreferredSize(new Dimension(1280, 670));
         add(main);
 
         try {
             // Henter verdier
             dwellingUnit.refreshValues();
         } catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
 
     }
@@ -137,12 +134,13 @@ public class DwellingUnitUI extends JPanel {
         dwellingUnit = new DwellingUnit();
 
         MainPanel main = new MainPanel();
-        main.setPreferredSize(new Dimension(1280, 720));
+        main.setPreferredSize(new Dimension(1280, 670));
         add(main);
 
         try {
             dwellingUnit.findDwellingUnitWithID(dID);
         } catch (SQLException e) {
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
     }
 
@@ -208,7 +206,7 @@ public class DwellingUnitUI extends JPanel {
     private class DataFieldScrollPanel extends JScrollPane {
         DataFieldScrollPanel() {
             // Scrollpanel container for boligfelt
-            setPreferredSize(new Dimension(950, 600));
+            setPreferredSize(new Dimension(950, 550));
 
             // Ramme
             setBorder(BorderFactory.createTitledBorder("Informasjon"));
@@ -238,7 +236,6 @@ public class DwellingUnitUI extends JPanel {
             setLayout(dataFieldPanelLayout);
             setPreferredSize(new Dimension(900, 750));
 
-
             setVisible(true);
         }
     }
@@ -246,7 +243,7 @@ public class DwellingUnitUI extends JPanel {
     // Sidepanel som samler sammen panelene ContractScrollPanel, DwelingUnitScrollPanel og ControlPanel.
     private class SidePanel extends JPanel {
         public SidePanel() {
-            setPreferredSize(new Dimension(300, 600));
+            setPreferredSize(new Dimension(300, 550));
 
             GridLayout sidepanelLayout = new GridLayout(3, 1);
             setLayout(sidepanelLayout);
@@ -473,7 +470,6 @@ public class DwellingUnitUI extends JPanel {
             setVisible(true);
         }
 
-
         public void actionPerformed(ActionEvent e) {
             if (e.getSource() == searchButton) {
                 try {
@@ -481,8 +477,8 @@ public class DwellingUnitUI extends JPanel {
                     int id = Integer.parseInt(identity);
                     dwellingUnit.findDwellingUnitWithID(id);
                     updateDwellingUnitFields();
-                } catch (SQLException s) {
-
+                } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
 
             } else if (e.getSource() == cancelButton) {
@@ -493,6 +489,7 @@ public class DwellingUnitUI extends JPanel {
                     dwellingUnit.cancelUpdates();
                     updateDwellingUnitFields();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if(e.getSource() == createNewButton) {
                 clearFields();
@@ -505,6 +502,7 @@ public class DwellingUnitUI extends JPanel {
                     dwellingUnit.previousDwellingUnit();
                     updateDwellingUnitFields();
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if (e.getSource() == saveButton) {
                 try {
@@ -515,6 +513,7 @@ public class DwellingUnitUI extends JPanel {
                         changeDwellingUnit();
                     }
                 } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else {
                 dwellingFrame.setVisible(false);
@@ -733,7 +732,7 @@ public class DwellingUnitUI extends JPanel {
             updateDwellingUnitFields();
         }
         catch (SQLException e) {
-
+            infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());
         }
     }
 }

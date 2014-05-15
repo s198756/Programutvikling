@@ -1,5 +1,3 @@
-package GUI.Files;
-
 import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
