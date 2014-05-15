@@ -9,23 +9,24 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.sql.SQLException;
 
-public class Kontraktvindu extends JFrame implements ActionListener{
-    Kontrakttabell k;                      //Et objekt av boligtabellen
+public class ContracttableWindow extends JFrame implements ActionListener{
+    Contracttable c;                      //Et objekt av boligtabellen
 
-    Contract contract;               //objekt av DwellingUnit-klassen: denne klassen inneholder en metode for å opprette og fylle et Cachedrowset
-    //med databaseverdier på bakgrunn av en eksisterende bolig i databasen. ved opprettelse blir den unike id-en sendt
-    //med, og det er dette som oppretter objektet. DwellingUnit inneholder oppdateringsmetoder, men man MÅ kalle startQuery() for å
-    //kunne unngå nullpointerexception. Inneholder også get-metoder for alle databaseverdier.
+    Contract contract;               //objekt av Contract-klassen: denne klassen inneholder en metode for å opprette
+                                    // og fylle et Cachedrowset med databaseverdier på bakgrunn av en eksisterende
+                                    // kontrakt i databasen. ved opprettelse blir den unike id-en sendt
+                                    //med, og det er dette som oppretter objektet. Contract inneholder
+                                    // oppdateringsmetoder, og også get-metoder for alle databaseverdier.
 
-    JButton visAlle;                    //Knapp for å vise alle boliger i databasen
-    JButton search;                     //Knapp for å søke etter en eller flere boliger i tabellen
-    JTextArea output;                   //utskriftsområde for søk etter id
+    JButton visAlle;                    //Knapp for å vise alle kontrakter i databasen
+    JButton search;                     //Knapp for å søke etter kontrakter i tabellen
+    JTextArea output;                   //utskriftsområde for muselytter
     JPanel buttonpanel;                 //Jpanel for øverste del av det ytre JPanel
     JPanel outputpanel;                 //outputpanel for utskriftsområdet
     JPanel tablepanel;                  //JPanel for tabellen i bunnen
 
     //Nedenfor er opprettelsen av panelet, og alt som hører til
-    public Kontraktvindu(){
+    public ContracttableWindow(){
         JFrame kontraktvindu = new JFrame();
         kontraktvindu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         kontraktvindu.setResizable(true);
@@ -35,7 +36,7 @@ public class Kontraktvindu extends JFrame implements ActionListener{
         kontraktvindu.setVisible(true);
 
         kontraktvindu.add(new JScrollPane(output), BorderLayout.SOUTH);
-        k = new Kontrakttabell();
+        c = new Contracttable();
         contract = new Contract();
         visAlle = new JButton("Vis alle kontrakter");
         search = new JButton("Søk");
@@ -48,8 +49,10 @@ public class Kontraktvindu extends JFrame implements ActionListener{
         tablepanel.setPreferredSize(new Dimension(300, 300));
         outputpanel = new JPanel();
 
-        kontraktvindu.add(buttonpanel, BorderLayout.PAGE_START);              //de forskjellige panelene legges til forskjellige deler av
-        kontraktvindu.add(outputpanel, BorderLayout.LINE_END);                //det ytre panelet og får faste plasser ed borderlayout
+        kontraktvindu.add(buttonpanel, BorderLayout.PAGE_START);              //de forskjellige panelene legges til
+                                                                              // forskjellige deler av
+        kontraktvindu.add(outputpanel, BorderLayout.LINE_END);                //det ytre panelet og får faste plasser
+                                                                             // med borderlayout
         kontraktvindu.add(tablepanel, BorderLayout.CENTER);
         buttonpanel.add(visAlle);
         buttonpanel.add(search);
@@ -60,31 +63,35 @@ public class Kontraktvindu extends JFrame implements ActionListener{
     //Lytteklasse for panelet
     public void actionPerformed(ActionEvent e){
         if(e.getSource() == visAlle){
-            DefaultTableModel alt = k.visAltIKontrakttabellen();
-            visTabell(alt);
+            DefaultTableModel alt = c.showEverythingInContracttable();
+            showTable(alt);
         }
         else if(e.getSource() == search){
             String choices[] = {"Bolig-ID"};
-            int nr = JOptionPane.showOptionDialog(null, "Hva vil du søke med?", "Boligsøking", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, choices, choices[0]);
+            int nr = JOptionPane.showOptionDialog(null, "Hva vil du søke med?", "Boligsøking",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, choices, choices[0]);
 
             if(nr == 0){
                 String adresse = JOptionPane.showInputDialog(null, "Skriv inn bolig-ID: ");
                 int id = Integer.parseInt(adresse);
-                DefaultTableModel adr = k.finnKontraktVedAASkriveInnBoligId(id);
-                visTabell(adr);
+                DefaultTableModel adr = c.findContractByDwellingUnit(id);
+                showTable(adr);
             }
         }
     }
 
-    public void visTabell(DefaultTableModel def){
-        /*Når man trykker på knappen for denne metoden, opprettes en JTable i bunnpanelet der det tilsendte objektet fra Boligtabellobjektet blir DefaultTableModel til
-        * JTable. Den har metoden revalidate(), som hele tiden oppdaterer den, og gjør at tabellene ikke blir lagt oppå hverandre.*/
-        tablepanel.removeAll();
+    public void showTable(DefaultTableModel def){
+        /*Når man trykker på en av knappene opprettes det i hvert tilfelle et spesifikt DefaultTableModel som sendes
+        til showTable(), som oppretter et JTable med det tilsendte DefaultTableModel som modell. Deretter legges
+        tabellen inn i tabellpanelet*/
+
+        tablepanel.removeAll();     //gjør at tabellene ikke legger seg oppå hverandre ved gjentatte opprettelser
 
         final JTable table = new JTable(){
             public Class getColumnClass(int column){                    //Denne metoden returnerer klassene til
                 for(int row = 0; row < getRowCount(); row++){           //de forskjellige tabellene.
-                    Object o = getValueAt(row, column);                 //Dermed får man skrevne datostempler, checkbox for booleanverdier osv
+                    Object o = getValueAt(row, column);                 //Dermed får man skrevne datostempler,
+                                                                        // checkbox for booleanverdier osv
 
                     if(o != null) {
                         return o.getClass();
@@ -104,37 +111,40 @@ public class Kontraktvindu extends JFrame implements ActionListener{
                     int row = target.getSelectedRow();
                     int column = 0;
 
-                    Object identity = target.getValueAt(row, column);
-                    int id = (Integer)identity;
+                    Object identity = target.getValueAt(row, column);       //objektet får kontraktens id som verdi
+                    int id = (Integer)identity;                             //castes til integer
 
                     try {
-                        contract.findContractWithID(id);
+                        contract.findContractWithID(id);                //finner bolig
                     } catch (SQLException e1) {
                         e1.printStackTrace();
                     }
 
-
-                    String info = "Kontrakt-ID: " + contract.getContractID() + "\nBolig-ID: " + contract.getDwellingUnitID() +
+                    //tekststreng med info
+                    String info = "Kontrakt-ID: " + contract.getContractID() + "\nBolig-ID: " +
+                            contract.getDwellingUnitID() +
                             "\nLeietaker: " + contract.getRenter() + "\nMegler: " + contract.getBroker() +
                             "\nOpprettet: " + contract.getCreatedDate() +
                             "\nGyldig til: " + contract.getExpirationDate();
 
 
-                    output.setText(info);
+                    output.setText(info);               //skriver ut info
 
                 }
             }
         });
 
-        JScrollPane scroll = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        //legger inn jscrollpane
+        JScrollPane scroll = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scroll.setViewportView(table);
         tablepanel.add(scroll, BorderLayout.CENTER);
-        tablepanel.revalidate();
-        tablepanel.repaint();
+        tablepanel.revalidate();                    //revaliderer tabellen
+        tablepanel.repaint();                       //gjør tabellen mindre klikk-sensitiv
     }
 
     public static void main(String[]args){
-        Kontraktvindu vindu = new Kontraktvindu();
+        ContracttableWindow vindu = new ContracttableWindow();
     }
 }
 
