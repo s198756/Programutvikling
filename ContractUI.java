@@ -10,7 +10,6 @@ import java.awt.event.*;
 import java.sql.SQLException;
 
 public class ContractUI extends JPanel{
-    JFrame contractFrame;
     JLabel contractLabel;
     JLabel contractIDLabel;
     JLabel dwellingUnitIDLabel;
@@ -92,9 +91,7 @@ public class ContractUI extends JPanel{
 
     boolean insertMode;
 
-    /*public static void main(String[] args) throws SQLException {
-        ContractUI contractPanel = new ContractUI();
-    }*/
+
 
     // Konstruktør som oppretter lister over alle kontrakter, personer og boliger. Viser kontrakten som er øverst på lista.
     public ContractUI() throws SQLException {
@@ -103,6 +100,9 @@ public class ContractUI extends JPanel{
         contract = new Contract();
         person = new Person();
         dwellingUnit = new DwellingUnit();
+        MainPanel main = new MainPanel();
+        main.setPreferredSize(new Dimension(1280, 720));
+        add(main);
 
         try {
             // Henter verdier
@@ -110,7 +110,7 @@ public class ContractUI extends JPanel{
         } catch (SQLException e) {
         }
 
-        EventQueue.invokeLater(new Runnable() {
+        /*EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -122,7 +122,7 @@ public class ContractUI extends JPanel{
                 }
 
 
-                contractFrame = new JFrame("Contract");
+                /*contractFrame = new JFrame("Contract");
                 contractFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 contractFrame.setResizable(true);
                 contractFrame.setLayout(new BorderLayout());
@@ -145,7 +145,7 @@ public class ContractUI extends JPanel{
 
                 }
             }
-        });
+        });*/
     }
 
     // Konstruktør som tar imot allerede opprettede lister.
@@ -160,7 +160,7 @@ public class ContractUI extends JPanel{
         } catch (SQLException e) {
         }
 
-        EventQueue.invokeLater(new Runnable() {
+        /*EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -193,7 +193,7 @@ public class ContractUI extends JPanel{
 
                 }
             }
-        });
+        });*/
     }
 
     // Konstruktør som oppretter lister over alle kontrakter, personer og boliger.
@@ -203,14 +203,14 @@ public class ContractUI extends JPanel{
         // Oppretter lister over alle kontrakter, personer og boliger
         contract = new Contract();
         person = new Person();
-        dwellingUnit = new DwellingUnit();;
+        dwellingUnit = new DwellingUnit();
 
         try {
             contract.findContractWithID(cID);
         } catch (SQLException e) {
         }
 
-        EventQueue.invokeLater(new Runnable() {
+        /*EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -245,7 +245,7 @@ public class ContractUI extends JPanel{
 
                 }
             }
-        });
+        });*/
     }
 
     // Hovedpanel som samler alle underpaneler.
@@ -727,7 +727,7 @@ public class ContractUI extends JPanel{
                 } catch (SQLException sql) {
                 }
             } else {
-                contractFrame.setVisible(false);
+                setVisible(false);
             }
         }
     }
