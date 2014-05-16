@@ -63,8 +63,7 @@ public class PersonUI extends JPanel {
     JCheckBox handicapAccommCheckBox;
     Person person;
     Contracttable contracttable;
-    boolean insertMode;
-    boolean next = false;
+    boolean insertMode = false;
 
     // Konstruktør som oppretter ny personliste over alle personer. Viser personen øverst på lista.
     public PersonUI() throws SQLException {
@@ -511,9 +510,11 @@ public class PersonUI extends JPanel {
                 try {
                     if (insertMode) {
                         person.moveToCurrentRow();
+                        insertMode = false;
                     }
                     person.cancelUpdates();
                     updateFields();
+                    insertMode = false;
                 } catch (SQLException sql) {
                     infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
@@ -642,9 +643,11 @@ public class PersonUI extends JPanel {
             person.updateStringValue("street", streetField.getText());
             person.updateStringValue("street_no", streetNoField.getText());
             person.updateStringValue("zip_code", zipCodeField.getText());
-            person.updateLongValue("telephone", Long.parseLong(telephoneField.getText()));
+            long telephone = Long.valueOf(telephoneField.getText().trim());
+            person.updateLongValue("telephone", telephone);
             person.updateStringValue("email", emailField.getText());
-            person.updateIntValue("annual_revenue", Integer.parseInt(annualRevenueField.getText()));
+            int annual = Integer.valueOf(annualRevenueField.getText());
+            person.updateIntValue("annual_revenue", annual);
             person.updateBooleanValue("passed_credit_check", passedCreditCheckBox.isSelected());
             person.updateBooleanValue("smoker", smokerCheckBox.isSelected());
             person.updateBooleanValue("housepets", housepetsCheckBox.isSelected());
@@ -670,6 +673,7 @@ public class PersonUI extends JPanel {
 
             // Oppdaterer infotekst for å vise eventuelle statusmeldinger
             updateFields();
+            insertMode = false;
         }
         catch (SQLException e) {
             infoTextLabel.setText("Error code: " + e.getErrorCode() + "\tLocalizedMessage: " + e.getLocalizedMessage());

@@ -10,7 +10,7 @@ public class SQLInterface {
 
     // Innloggingsinformasjon
     private static final String DB_DRIVER = "com.mysql.jdbc.Driver";
-    private static final String DB_URL = "jdbc:mysql://sebastianramsla3.mysql.domeneshop.no/sebastianramsla3";
+    private static final String DB_URL = "jdbc:mysql://sebastianramsla3.mysql.domeneshop.no/sebastianramsla3?zeroDateTimeBehavior=convertToNull";
     private static final String DB_USER = "sebastianramsla3";
     private static final String DB_PASSWORD = "pjW8iUnH";
     private static final String DB_SCHEMA = "sebastianramsla3";

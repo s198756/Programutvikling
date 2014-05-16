@@ -17,7 +17,8 @@ public class DwellingUnitUI extends JPanel {
     JButton searchButton;
     JButton saveButton;
     JButton cancelButton;
-    JButton closeButton;
+    JButton nextButton;
+    JButton previousButton;
     JButton createNewButton;
     JButton deleteButton;
     JLabel ownerLabel;
@@ -86,7 +87,7 @@ public class DwellingUnitUI extends JPanel {
     DwellingUnit dwellingUnit;
 
     // Angir om Rowset er i en innsettingsfase av ny rad.
-    boolean insertMode;
+    boolean insertMode = false;
 
     // Konstruktør som oppretter ny boligliste over alle boliger. Viser boligen øverst på lista.
     public DwellingUnitUI() throws SQLException {
@@ -448,15 +449,17 @@ public class DwellingUnitUI extends JPanel {
             cancelButton = new JButton("Avbryt");
             deleteButton = new JButton("Slett");
             searchButton = new JButton("Søk");
-            closeButton = new JButton("Lukk");
+            nextButton = new JButton("Neste");
             createNewButton = new JButton("Ny");
+            previousButton = new JButton("Forrige");
 
             searchButton.addActionListener(this);
             cancelButton.addActionListener(this);
             saveButton.addActionListener(this);
-            closeButton.addActionListener(this);
+            nextButton.addActionListener(this);
             deleteButton.addActionListener(this);
             createNewButton.addActionListener(this);
+            previousButton.addActionListener(this);
 
             // Layout: Kontrollpanel
             GridLayout controlLayout = new GridLayout(3, 3, 25, 25);
@@ -466,12 +469,25 @@ public class DwellingUnitUI extends JPanel {
             add(saveButton);
             add(deleteButton);
             add(cancelButton);
-            add(closeButton);
+            add(nextButton);
+            add(previousButton);
             setVisible(true);
         }
 
         public void actionPerformed(ActionEvent e) {
-            if (e.getSource() == searchButton) {
+            if(e.getSource() == nextButton){
+                try {
+                    if (insertMode) {
+                        dwellingUnit.moveToCurrentRow();
+                    }
+                    dwellingUnit.nextPerson();
+                    dwellingUnit.refreshValues();
+                    updateDwellingUnitFields();
+                } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
+                }
+            }
+            else if (e.getSource() == searchButton) {
                 try {
                     String identity = JOptionPane.showInputDialog("Søk etter ID: ");
                     int id = Integer.parseInt(identity);
@@ -485,16 +501,24 @@ public class DwellingUnitUI extends JPanel {
                 try {
                     if (insertMode) {
                         dwellingUnit.moveToCurrentRow();
+                        insertMode = false;
                     }
                     dwellingUnit.cancelUpdates();
                     updateDwellingUnitFields();
+                    insertMode = false;
                 } catch (SQLException sql) {
                     infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
             } else if(e.getSource() == createNewButton) {
-                clearFields();
-                insertMode = true;
-                adressLabel.setText(null);
+                try {
+                    clearFields();
+                    dwellingUnit.moveToInsertRow();
+                    insertMode = true;
+                    adressLabel.setText(null);
+                    updateInfotext();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
             }else if(e.getSource() == deleteButton) {
                 try {
                     dwellingUnit.deleteRow();
@@ -515,11 +539,20 @@ public class DwellingUnitUI extends JPanel {
                 } catch (SQLException sql) {
                     infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
                 }
-            } else {
-                dwellingFrame.setVisible(false);
+            }else if (e.getSource() == previousButton){
+                try {
+                    if (insertMode) {
+                        dwellingUnit.moveToCurrentRow();
+                    }
+                    dwellingUnit.previousDwellingUnit();
+                    updateDwellingUnitFields();
+                } catch (SQLException sql) {
+                    infoTextLabel.setText("Error code: " + sql.getErrorCode() + "\tLocalizedMessage: " + sql.getLocalizedMessage());
+                }
+            }
             }
         }
-    }
+
 
     // Statusbar som viser informative programmeldinger
     private class StatusbarPanel extends JPanel {
@@ -622,11 +655,15 @@ public class DwellingUnitUI extends JPanel {
             dwellingUnit.updateStringValue("property_owner", ownerField.getText());
             String boligtype = type.getSelectedItem().toString();
             dwellingUnit.updateStringValue("dwelling_type", boligtype);
-            dwellingUnit.updateStringValue("size", sizeField.getText());
+            int size = Integer.valueOf(sizeField.getText());
+            dwellingUnit.updateIntValue("size", size);
+            int zip = Integer.valueOf(zipCodeField.getText());
+            dwellingUnit.updateIntValue("zip_code", zip);
             dwellingUnit.updateStringValue("street", streetField.getText());
             dwellingUnit.updateStringValue("street_no", streetNoField.getText());
-            dwellingUnit.updateStringValue("zip_code", zipCodeField.getText());
-            dwellingUnit.updateStringValue("monthly_price", monthlyField.getText());
+            int monthly = Integer.valueOf(monthlyField.getText());
+            dwellingUnit.updateIntValue("monthly_price", monthly);
+            int deposit = Integer.valueOf(depositField.getText());
             dwellingUnit.updateStringValue("depositum", depositField.getText());
             dwellingUnit.updateBooleanValue("incl_warmup", warmupCheckBox.isSelected());
             dwellingUnit.updateBooleanValue("incl_warmwater", warmwaterCheckBox.isSelected());
@@ -639,12 +676,18 @@ public class DwellingUnitUI extends JPanel {
             dwellingUnit.updateBooleanValue("allow_smokers", smokeCheckBox.isSelected());
             dwellingUnit.updateBooleanValue("elevator", true);
             dwellingUnit.updateBooleanValue("handicap_accomm", true);
-            dwellingUnit.updateIntValue("property_size", Integer.parseInt(propertyField.getText()));
-            dwellingUnit.updateStringValue("amount_bedroom", soveromField.getText());
-            dwellingUnit.updateStringValue("amount_bathroom", badField.getText());
-            dwellingUnit.updateStringValue("amount_balcony", balkongField.getText());
-            dwellingUnit.updateStringValue("amount_terrace", terraseLabel.getText());
-            dwellingUnit.updateStringValue("amount_private_parking", parkeringField.getText());
+            int property = Integer.valueOf(propertyField.getText());
+            dwellingUnit.updateIntValue("property_size", property);
+            int bed = Integer.valueOf(soveromField.getText());
+            dwellingUnit.updateIntValue("amount_bedroom", bed);
+            int bath = Integer.valueOf(badField.getText());
+            dwellingUnit.updateIntValue("amount_bathroom", bath);
+            int terrace = Integer.valueOf(terrasseField.getText());
+            dwellingUnit.updateIntValue("amount_terrace", terrace);
+            int balcony = Integer.valueOf(balkongField.getText());
+            dwellingUnit.updateIntValue("amount_balcony", balcony);
+            int parking = Integer.valueOf(parkeringField.getText());
+            dwellingUnit.updateIntValue("amount_private_parking", parking);
 
             // Inserter raden
             dwellingUnit.insertRow();
@@ -654,15 +697,17 @@ public class DwellingUnitUI extends JPanel {
 
             // Flytter peker vekk fra innsettingsrad
             dwellingUnit.moveToCurrentRow();
+            dwellingUnit.acceptChanges();
 
             // Sender endringer til databasen
-            if (!dwellingUnit.acceptChanges()) {
+            /*if (!dwellingUnit.acceptChanges()) {
                 JOptionPane.showMessageDialog(null, "Kunne ikke sende endringer til databasen");
-            }
+            }*/
 
             // Oppdaterer infotekst for å vise eventuelle statusmeldinger
             updateInfotext();
 
+            insertMode = false;
             // Henter fram nederste person
             dwellingUnit.last();
             dwellingUnit.refreshValues();

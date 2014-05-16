@@ -82,7 +82,7 @@ public class Persontable {
             con = DriverManager.getConnection(URL, USER, PASSWORD);
             ps = con.prepareStatement(query);
 
-            ps.setString(1, name);                                  //Denne metoden gjør alt det samme som forrige
+            ps.setString(1,"%" + name + "%");                                  //Denne metoden gjør alt det samme som forrige
                                                                     // metode frem til her. Den første parameteren
                                                                     //er en indeks-verdi for hvor man skal
                                                                     //plassere string-verdien.
@@ -102,7 +102,7 @@ public class Persontable {
                 for (int i = 1; i <= numberofcolumns; i++) {
                     newrows.addElement(rs.getObject(i));
                 }
-                rows.addElement(rows);
+                rows.addElement(newrows);
             }
             rs.close();
             stmt.close();                                   //lukker alle åpne forbindelser
